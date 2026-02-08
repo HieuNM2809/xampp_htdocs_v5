@@ -1,0 +1,461 @@
+---
+// Dynamic route để hiển thị chi tiết post
+interface Post {
+	userId: number;
+	id: number;
+	title: string;
+	body: string;
+}
+
+interface Comment {
+	postId: number;
+	id: number;
+	name: string;
+	email: string;
+	body: string;
+}
+
+interface User {
+	id: number;
+	name: string;
+	email: string;
+	username: string;
+	address: {
+		street: string;
+		city: string;
+	};
+	phone: string;
+	website: string;
+}
+
+const { id } = Astro.params;
+
+// Fetch post details
+const postResponse = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+const post: Post = await postResponse.json();
+
+// Fetch comments for this post
+const commentsResponse = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}/comments`);
+const comments: Comment[] = await commentsResponse.json();
+
+// Fetch user info
+const userResponse = await fetch(`https://jsonplaceholder.typicode.com/users/${post.userId}`);
+const user: User = await userResponse.json();
+---
+
+<!DOCTYPE html>
+<html lang="vi">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{post.title} - Astro API Examples</title>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+	</head>
+	<body>
+		<div class="container">
+			<header>
+				<div class="logo">
+					<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M163.008 18.929c1.944 2.413 2.935 5.67 4.917 12.181l43.309 142.27a180.277 180.277 0 00-51.778-17.53l-28.198-95.29a3.67 3.67 0 00-7.042.01l-27.857 95.232a180.225 180.225 0 00-52.01 17.557l43.52-142.281c1.99-6.502 2.983-9.752 4.927-12.16a15.999 15.999 0 016.484-4.798c2.872-1.154 6.271-1.154 13.07-1.154h31.085c6.807 0 10.211 0 13.086 1.157a16.004 16.004 0 016.487 4.806z" fill="url(#paint0_linear)"></path>
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M168.19 180.151c-7.139 6.105-21.39 10.268-37.804 10.268-20.147 0-37.033-6.272-41.513-14.707-1.602 4.835-1.961 10.367-1.961 13.902 0 0-5.875 61.686 43.074 58.386 48.949-3.3 31.128-47.835 31.128-47.835 2.898-6.392 4.348-9.589 5.153-12.425a41.15 41.15 0 001.405-6.52c.024-.487.031-.975.031-1.463 0-3.076-.338-6.08-.513-7.606z" fill="#FF5D01"></path>
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M168.19 180.151c-7.139 6.105-21.39 10.268-37.804 10.268-20.147 0-37.033-6.272-41.513-14.707-1.602 4.835-1.961 10.367-1.961 13.902 0 0-5.875 61.686 43.074 58.386 48.949-3.3 31.128-47.835 31.128-47.835 2.898-6.392 4.348-9.589 5.153-12.425a41.15 41.15 0 001.405-6.52c.024-.487.031-.975.031-1.463 0-3.076-.338-6.08-.513-7.606z" fill="url(#paint1_linear)"></path>
+						<defs>
+							<linearGradient id="paint0_linear" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+								<stop stop-color="#D83333"></stop>
+								<stop offset="1" stop-color="#F041FF"></stop>
+							</linearGradient>
+							<linearGradient id="paint1_linear" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+								<stop stop-color="#D83333"></stop>
+								<stop offset="1" stop-color="#F041FF"></stop>
+							</linearGradient>
+						</defs>
+					</svg>
+					<span>Astro API Examples</span>
+				</div>
+				<nav>
+					<a href="/">Trang chủ</a>
+					<a href="/posts">Danh sách Posts</a>
+				</nav>
+			</header>
+
+			<main>
+				<div class="breadcrumb">
+					<a href="/posts">← Quay lại danh sách</a>
+				</div>
+
+				<article class="post-detail">
+					<div class="post-meta">
+						<span class="post-id">Post #{post.id}</span>
+						<span class="divider">•</span>
+						<span class="user-info">
+							<span class="user-icon">👤</span>
+							{user.name} (@{user.username})
+						</span>
+					</div>
+
+					<h1 class="post-title">{post.title}</h1>
+
+					<div class="post-content">
+						<p>{post.body}</p>
+					</div>
+
+					<div class="author-card">
+						<h3>📝 Thông tin tác giả</h3>
+						<div class="author-details">
+							<div class="author-item">
+								<strong>Tên:</strong> {user.name}
+							</div>
+							<div class="author-item">
+								<strong>Email:</strong> <a href={`mailto:${user.email}`}>{user.email}</a>
+							</div>
+							<div class="author-item">
+								<strong>Điện thoại:</strong> {user.phone}
+							</div>
+							<div class="author-item">
+								<strong>Website:</strong> <a href={`https://${user.website}`} target="_blank">{user.website}</a>
+							</div>
+							<div class="author-item">
+								<strong>Địa chỉ:</strong> {user.address.street}, {user.address.city}
+							</div>
+						</div>
+					</div>
+				</article>
+
+				<section class="comments-section">
+					<h2 class="comments-title">
+						💬 Bình luận ({comments.length})
+					</h2>
+
+					<div class="comments-list">
+						{comments.map((comment) => (
+							<div class="comment-card">
+								<div class="comment-header">
+									<div class="comment-author">
+										<span class="avatar">{comment.name.charAt(0).toUpperCase()}</span>
+										<div>
+											<div class="author-name">{comment.name}</div>
+											<div class="author-email">{comment.email}</div>
+										</div>
+									</div>
+								</div>
+								<div class="comment-body">
+									{comment.body}
+								</div>
+							</div>
+						))}
+					</div>
+				</section>
+			</main>
+
+			<footer>
+				<p>Built with ❤️ using <a href="https://astro.build" target="_blank">Astro</a></p>
+			</footer>
+		</div>
+
+		<style>
+			:root {
+				--primary: #ff5d01;
+				--primary-dark: #d83333;
+				--secondary: #f041ff;
+				--bg: #0f1117;
+				--surface: #1a1d29;
+				--surface-light: #23283a;
+				--text: #ffffff;
+				--text-secondary: #9ca3af;
+				--border: rgba(255, 255, 255, 0.1);
+				--shadow: rgba(0, 0, 0, 0.3);
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: var(--bg);
+				color: var(--text);
+				line-height: 1.6;
+				min-height: 100vh;
+			}
+
+			.container {
+				max-width: 900px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+
+			/* Header */
+			header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 20px 0;
+				margin-bottom: 40px;
+				border-bottom: 1px solid var(--border);
+			}
+
+			.logo {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				font-size: 1.2rem;
+				font-weight: 700;
+			}
+
+			nav {
+				display: flex;
+				gap: 30px;
+			}
+
+			nav a {
+				color: var(--text-secondary);
+				text-decoration: none;
+				font-weight: 500;
+				transition: color 0.3s ease;
+			}
+
+			nav a:hover {
+				color: var(--text);
+			}
+
+			/* Breadcrumb */
+			.breadcrumb {
+				margin-bottom: 30px;
+			}
+
+			.breadcrumb a {
+				color: var(--primary);
+				text-decoration: none;
+				font-weight: 500;
+				transition: all 0.3s ease;
+			}
+
+			.breadcrumb a:hover {
+				color: var(--secondary);
+				transform: translateX(-5px);
+			}
+
+			/* Post Detail */
+			.post-detail {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 40px;
+				margin-bottom: 40px;
+			}
+
+			.post-meta {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin-bottom: 25px;
+				color: var(--text-secondary);
+				font-size: 0.95rem;
+			}
+
+			.post-id {
+				background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+				color: white;
+				padding: 5px 12px;
+				border-radius: 12px;
+				font-weight: 600;
+				font-size: 0.85rem;
+			}
+
+			.divider {
+				color: var(--border);
+			}
+
+			.user-info {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
+			.user-icon {
+				font-size: 1.1rem;
+			}
+
+			.post-title {
+				font-size: 2.5rem;
+				font-weight: 700;
+				margin-bottom: 30px;
+				line-height: 1.2;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+				text-transform: capitalize;
+			}
+
+			.post-content {
+				font-size: 1.1rem;
+				line-height: 1.8;
+				color: var(--text-secondary);
+				margin-bottom: 40px;
+				padding: 30px;
+				background: var(--surface-light);
+				border-left: 4px solid var(--primary);
+				border-radius: 8px;
+			}
+
+			/* Author Card */
+			.author-card {
+				background: var(--surface-light);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 30px;
+			}
+
+			.author-card h3 {
+				margin-bottom: 20px;
+				font-size: 1.3rem;
+			}
+
+			.author-details {
+				display: grid;
+				gap: 15px;
+			}
+
+			.author-item {
+				display: flex;
+				gap: 10px;
+				color: var(--text-secondary);
+			}
+
+			.author-item strong {
+				color: var(--text);
+				min-width: 100px;
+			}
+
+			.author-item a {
+				color: var(--primary);
+				text-decoration: none;
+			}
+
+			.author-item a:hover {
+				text-decoration: underline;
+			}
+
+			/* Comments Section */
+			.comments-section {
+				margin-bottom: 60px;
+			}
+
+			.comments-title {
+				font-size: 2rem;
+				margin-bottom: 30px;
+			}
+
+			.comments-list {
+				display: flex;
+				flex-direction: column;
+				gap: 20px;
+			}
+
+			.comment-card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 25px;
+				transition: all 0.3s ease;
+			}
+
+			.comment-card:hover {
+				border-color: var(--primary);
+				transform: translateX(5px);
+			}
+
+			.comment-header {
+				margin-bottom: 15px;
+			}
+
+			.comment-author {
+				display: flex;
+				align-items: center;
+				gap: 15px;
+			}
+
+			.avatar {
+				width: 48px;
+				height: 48px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: 700;
+				font-size: 1.2rem;
+				color: white;
+			}
+
+			.author-name {
+				font-weight: 600;
+				font-size: 1.05rem;
+				text-transform: capitalize;
+			}
+
+			.author-email {
+				font-size: 0.9rem;
+				color: var(--text-secondary);
+			}
+
+			.comment-body {
+				color: var(--text-secondary);
+				line-height: 1.7;
+				padding-left: 63px;
+			}
+
+			/* Footer */
+			footer {
+				text-align: center;
+				padding: 40px 0;
+				color: var(--text-secondary);
+				border-top: 1px solid var(--border);
+			}
+
+			footer a {
+				color: var(--primary);
+				text-decoration: none;
+			}
+
+			footer a:hover {
+				text-decoration: underline;
+			}
+
+			/* Responsive */
+			@media (max-width: 768px) {
+				.post-detail {
+					padding: 25px;
+				}
+
+				.post-title {
+					font-size: 1.8rem;
+				}
+
+				.post-content {
+					padding: 20px;
+					font-size: 1rem;
+				}
+
+				.comment-body {
+					padding-left: 0;
+					margin-top: 10px;
+				}
+
+				header {
+					flex-direction: column;
+					gap: 20px;
+				}
+
+				nav {
+					gap: 20px;
+				}
+			}
+		</style>
+	</body>
+</html>

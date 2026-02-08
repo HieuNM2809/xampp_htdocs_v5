@@ -1,0 +1,322 @@
+---
+// Trang chủ với giới thiệu về API examples
+---
+
+<!DOCTYPE html>
+<html lang="vi">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Astro API Examples - JSONPlaceholder</title>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+	</head>
+	<body>
+		<div class="container">
+			<header>
+				<div class="logo">
+					<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M163.008 18.929c1.944 2.413 2.935 5.67 4.917 12.181l43.309 142.27a180.277 180.277 0 00-51.778-17.53l-28.198-95.29a3.67 3.67 0 00-7.042.01l-27.857 95.232a180.225 180.225 0 00-52.01 17.557l43.52-142.281c1.99-6.502 2.983-9.752 4.927-12.16a15.999 15.999 0 016.484-4.798c2.872-1.154 6.271-1.154 13.07-1.154h31.085c6.807 0 10.211 0 13.086 1.157a16.004 16.004 0 016.487 4.806z" fill="url(#paint0_linear)"></path>
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M168.19 180.151c-7.139 6.105-21.39 10.268-37.804 10.268-20.147 0-37.033-6.272-41.513-14.707-1.602 4.835-1.961 10.367-1.961 13.902 0 0-5.875 61.686 43.074 58.386 48.949-3.3 31.128-47.835 31.128-47.835 2.898-6.392 4.348-9.589 5.153-12.425a41.15 41.15 0 001.405-6.52c.024-.487.031-.975.031-1.463 0-3.076-.338-6.08-.513-7.606z" fill="#FF5D01"></path>
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M168.19 180.151c-7.139 6.105-21.39 10.268-37.804 10.268-20.147 0-37.033-6.272-41.513-14.707-1.602 4.835-1.961 10.367-1.961 13.902 0 0-5.875 61.686 43.074 58.386 48.949-3.3 31.128-47.835 31.128-47.835 2.898-6.392 4.348-9.589 5.153-12.425a41.15 41.15 0 001.405-6.52c.024-.487.031-.975.031-1.463 0-3.076-.338-6.08-.513-7.606z" fill="url(#paint1_linear)"></path>
+						<defs>
+							<linearGradient id="paint0_linear" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+								<stop stop-color="#D83333"></stop>
+								<stop offset="1" stop-color="#F041FF"></stop>
+							</linearGradient>
+							<linearGradient id="paint1_linear" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+								<stop stop-color="#D83333"></stop>
+								<stop offset="1" stop-color="#F041FF"></stop>
+							</linearGradient>
+						</defs>
+					</svg>
+					<span>Astro API Examples</span>
+				</div>
+				<nav>
+					<a href="/" class="active">Trang chủ</a>
+					<a href="/posts">Danh sách Posts</a>
+				</nav>
+			</header>
+
+			<main>
+				<div class="hero">
+					<h1 class="title">
+						<span class="gradient-text">API Examples</span>
+						<br />với JSONPlaceholder
+					</h1>
+					<p class="subtitle">
+						Tìm hiểu cách fetch data từ REST API và hiển thị trong Astro
+					</p>
+				</div>
+
+				<div class="features">
+					<div class="feature-card">
+						<div class="icon">📝</div>
+						<h3>Posts List</h3>
+						<p>Hiển thị danh sách tất cả các posts từ API</p>
+						<a href="/posts" class="btn">Xem danh sách →</a>
+					</div>
+
+					<div class="feature-card">
+						<div class="icon">🔍</div>
+						<h3>Post Details</h3>
+						<p>Xem chi tiết từng post với routing động</p>
+						<a href="/posts/1" class="btn">Xem chi tiết →</a>
+					</div>
+
+					<div class="feature-card">
+						<div class="icon">⚡</div>
+						<h3>Fast & Modern</h3>
+						<p>Build với Astro - Zero JavaScript by default</p>
+						<a href="https://astro.build" target="_blank" class="btn">Tìm hiểu Astro →</a>
+					</div>
+				</div>
+
+				<div class="api-info">
+					<h2>📡 API Endpoint</h2>
+					<code>https://jsonplaceholder.typicode.com/posts</code>
+					<p>JSONPlaceholder cung cấp fake REST API miễn phí cho việc testing và prototyping</p>
+				</div>
+			</main>
+
+			<footer>
+				<p>Built with ❤️ using <a href="https://astro.build" target="_blank">Astro</a></p>
+			</footer>
+		</div>
+
+		<style>
+			:root {
+				--primary: #ff5d01;
+				--primary-dark: #d83333;
+				--secondary: #f041ff;
+				--bg: #0f1117;
+				--surface: #1a1d29;
+				--surface-light: #23283a;
+				--text: #ffffff;
+				--text-secondary: #9ca3af;
+				--border: rgba(255, 255, 255, 0.1);
+				--shadow: rgba(0, 0, 0, 0.3);
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: var(--bg);
+				color: var(--text);
+				line-height: 1.6;
+				min-height: 100vh;
+			}
+
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+
+			/* Header */
+			header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 20px 0;
+				margin-bottom: 60px;
+				border-bottom: 1px solid var(--border);
+			}
+
+			.logo {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				font-size: 1.2rem;
+				font-weight: 700;
+			}
+
+			nav {
+				display: flex;
+				gap: 30px;
+			}
+
+			nav a {
+				color: var(--text-secondary);
+				text-decoration: none;
+				font-weight: 500;
+				transition: color 0.3s ease;
+				position: relative;
+			}
+
+			nav a:hover,
+			nav a.active {
+				color: var(--text);
+			}
+
+			nav a.active::after {
+				content: '';
+				position: absolute;
+				bottom: -8px;
+				left: 0;
+				width: 100%;
+				height: 2px;
+				background: linear-gradient(90deg, var(--primary), var(--secondary));
+				border-radius: 2px;
+			}
+
+			/* Hero */
+			.hero {
+				text-align: center;
+				margin-bottom: 80px;
+			}
+
+			.title {
+				font-size: 4rem;
+				font-weight: 700;
+				margin-bottom: 20px;
+				line-height: 1.1;
+			}
+
+			.gradient-text {
+				background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+
+			.subtitle {
+				font-size: 1.4rem;
+				color: var(--text-secondary);
+				max-width: 600px;
+				margin: 0 auto;
+			}
+
+			/* Features */
+			.features {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+				gap: 30px;
+				margin-bottom: 80px;
+			}
+
+			.feature-card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 40px 30px;
+				text-align: center;
+				transition: all 0.3s ease;
+			}
+
+			.feature-card:hover {
+				transform: translateY(-5px);
+				border-color: var(--primary);
+				box-shadow: 0 20px 40px var(--shadow);
+			}
+
+			.icon {
+				font-size: 3rem;
+				margin-bottom: 20px;
+			}
+
+			.feature-card h3 {
+				font-size: 1.5rem;
+				margin-bottom: 15px;
+			}
+
+			.feature-card p {
+				color: var(--text-secondary);
+				margin-bottom: 25px;
+			}
+
+			.btn {
+				display: inline-block;
+				padding: 12px 24px;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+				color: white;
+				text-decoration: none;
+				border-radius: 8px;
+				font-weight: 600;
+				transition: all 0.3s ease;
+			}
+
+			.btn:hover {
+				transform: scale(1.05);
+				box-shadow: 0 10px 30px rgba(255, 93, 1, 0.3);
+			}
+
+			/* API Info */
+			.api-info {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 40px;
+				text-align: center;
+				margin-bottom: 60px;
+			}
+
+			.api-info h2 {
+				margin-bottom: 20px;
+			}
+
+			.api-info code {
+				display: inline-block;
+				background: var(--surface-light);
+				padding: 15px 30px;
+				border-radius: 8px;
+				font-size: 1.1rem;
+				color: var(--primary);
+				margin: 20px 0;
+				border: 1px solid var(--border);
+			}
+
+			.api-info p {
+				color: var(--text-secondary);
+			}
+
+			/* Footer */
+			footer {
+				text-align: center;
+				padding: 40px 0;
+				color: var(--text-secondary);
+				border-top: 1px solid var(--border);
+			}
+
+			footer a {
+				color: var(--primary);
+				text-decoration: none;
+			}
+
+			footer a:hover {
+				text-decoration: underline;
+			}
+
+			/* Responsive */
+			@media (max-width: 768px) {
+				.title {
+					font-size: 2.5rem;
+				}
+
+				.subtitle {
+					font-size: 1.1rem;
+				}
+
+				header {
+					flex-direction: column;
+					gap: 20px;
+				}
+
+				nav {
+					gap: 20px;
+				}
+
+				.features {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</body>
+</html>
