@@ -8,51 +8,57 @@ Repo này minh họa cách dùng thư viện Cobra để viết CLI trong Go, th
 go mod tidy
 ```
 
-### 2. Ví dụ cơ bản (đang trong `main.go`)
+### 2. Cấu trúc hiện tại
 
-Hiện tại app có **1 root command**:
+Toàn bộ logic nằm trong `main.go` và `api.go`:
+
+- **Root command**: `app`
+  - Flag chung: `-v, --verbose` để bật log `[DEBUG]`.
+- **Subcommand**:
+  - `hello` – in lời chào, flag `--name` / `-n`.
+  - `time` – in thời gian hiện tại, flag `--format` / `-f` (`full|date|time`).
+  - `api` – gọi HTTP API demo + hiển thị thanh progress dạng text.
+
+### 3. Cách chạy nhanh
+
+- **Xem help & danh sách lệnh**:
 
 ```bash
-go run .
-go run . --name=Hoang
-go run . -n Hoang
+go run . --help
+go run . api --help
 ```
 
-Chức năng: in lời chào, nhận flag `--name` / `-n`.
+- **Lệnh `hello`**:
 
-### 3. Ví dụ nâng cao (gợi ý cấu trúc)
+```bash
+go run . hello
+go run . hello --name=Hoang
+go run . hello -n Hoang -v
+```
 
-Để nâng cấp thành CLI “xịn” hơn, bạn có thể:
+- **Lệnh `time`**:
 
-- **Tách `rootCmd` ra package `cmd`** (theo style Cobra):
-  - `main.go` chỉ gọi `cmd.Execute()`.
-  - Trong `cmd/root.go` định nghĩa root command, persistent flags (`--config`, `--verbose`…).
-- **Thêm subcommand**:
-  - `hello` : in lời chào, có flag `--name`.
-  - `serve` : chạy HTTP server demo, có flag `--port`, `--host`.
-  - `task` : nhóm lệnh `task add`, `task list` để minh họa subcommand lồng nhau.
-- **Dùng các tính năng Cobra khác**:
-  - `PersistentPreRun` / `PreRun` để xử lý chung (log, đọc config…).
+```bash
+go run . time
+go run . time --format=date
+go run . time -f time -v
+```
+
+- **Lệnh `api` (gọi HTTP API + progress bar)**:
+
+```bash
+go run . api
+go run . api --url=https://jsonplaceholder.typicode.com/todos/2
+go run . api --timeout=2s -v
+```
+
+Lệnh `api` mặc định gọi JSONPlaceholder (`/todos/1`), vẽ thanh tiến trình từ 0% → 100%, sau đó parse JSON và in các field ra màn hình.
+
+### 4. Gợi ý nâng cấp thêm
+
+- Tách code sang package `cmd` theo style generator của Cobra (`cmd/root.go`, `cmd/hello.go`, `cmd/api.go`…).
+- Dùng thêm:
   - `Args` để validate tham số (`cobra.MinimumNArgs`, `cobra.ExactArgs`…).
-  - Tự sinh help: `app --help`, `app help task`.
-
-Ví dụ skeleton nâng cao (ý tưởng ngắn gọn):
-
-```go
-rootCmd := &cobra.Command{ Use: "app" }
-
-helloCmd := &cobra.Command{
-  Use: "hello",
-  Run: func(cmd *cobra.Command, args []string) { /* ... */ },
-}
-
-serveCmd := &cobra.Command{
-  Use: "serve",
-  RunE: func(cmd *cobra.Command, args []string) error { /* ... */ return nil },
-}
-
-rootCmd.AddCommand(helloCmd, serveCmd)
-```
-
-Bạn có thể dùng README này để làm “ghi chú” rồi chỉnh `main.go` thành ví dụ nhiều command khi cần.
+  - Đọc config thật bằng `viper`.
+  - Sinh autocomplete shell, man page… giống hướng dẫn trong repo Cobra gốc.
 
