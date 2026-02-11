@@ -18,6 +18,7 @@ Toàn bộ logic nằm trong `main.go` và `api.go`:
   - `hello` – in lời chào, flag `--name` / `-n`.
   - `time` – in thời gian hiện tại, flag `--format` / `-f` (`full|date|time`).
   - `api` – gọi HTTP API demo + hiển thị thanh progress dạng text.
+  - `job` – chạy nhiều tác vụ song song (concurrency) với progress tổng.
 
 ### 3. Cách chạy nhanh
 
@@ -53,6 +54,16 @@ go run . api --timeout=2s -v
 ```
 
 Lệnh `api` mặc định gọi JSONPlaceholder (`/todos/1`), vẽ thanh tiến trình từ 0% → 100%, sau đó parse JSON và in các field ra màn hình.
+
+- **Lệnh `job` (concurrency + progress nhiều task)**:
+
+```bash
+go run . job
+go run . job --count=20 --concurrency=5
+go run . job --count=20 --concurrency=5 --fail-after=12 -v
+```
+
+`job` sẽ tạo nhiều task giả lập chạy song song, hiển thị progress tổng `(done/total, failed)`.
 
 ### 4. Gợi ý nâng cấp thêm
 
