@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ví dụ IndexedDB</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Ví dụ IndexedDB</h1>
+        <p class="subtitle">Quản lý dữ liệu với IndexedDB trong trình duyệt</p>
+
+        <div class="controls">
+            <div class="form-group">
+                <label for="name">Tên:</label>
+                <input type="text" id="name" placeholder="Nhập tên">
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="Nhập email">
+            </div>
+            <div class="form-group">
+                <label for="age">Tuổi:</label>
+                <input type="number" id="age" placeholder="Nhập tuổi">
+            </div>
+            <div class="button-group">
+                <button id="btnAdd" class="btn btn-primary">Thêm</button>
+                <button id="btnUpdate" class="btn btn-secondary" disabled>Cập nhật</button>
+                <button id="btnClear" class="btn btn-danger">Xóa tất cả</button>
+            </div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="data-section">
+            <h2>Danh sách dữ liệu</h2>
+            <div id="dataList" class="data-list"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
