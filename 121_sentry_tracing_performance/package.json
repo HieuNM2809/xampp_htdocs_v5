@@ -1,0 +1,18 @@
+{
+  "name": "121_sentry_tracing_performance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "1-basic.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sentry/node": "^5.5.0",
+    "@sentry/profiling-node": "^10.45.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  }
+}

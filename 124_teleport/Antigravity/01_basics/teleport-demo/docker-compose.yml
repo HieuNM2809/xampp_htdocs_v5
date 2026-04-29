@@ -1,0 +1,27 @@
+services:
+  teleport:
+    # Docker Hub (goteleport/teleport) đã DEPRECATED!
+    # Image chính thức mới nằm trên AWS ECR Public:
+    #   - distroless     : production (không có shell)
+    #   - distroless-debug: có shell, dùng cho dev/learn
+    image: public.ecr.aws/gravitational/teleport-distroless-debug:16
+    container_name: teleport-demo
+    ports:
+      - "443:443"       # Web UI
+      - "3023:3023"     # SSH Proxy
+      - "3024:3024"     # Tunnel
+      - "3025:3025"     # Auth gRPC
+    volumes:
+      - ./config/teleport.yaml:/etc/teleport/teleport.yaml:ro
+      - ./data:/var/lib/teleport
+      - ./logs:/var/log/teleport
+    command: ["teleport", "start", "--config=/etc/teleport/teleport.yaml"]
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - teleport-net
+
+networks:
+  teleport-net:
+    driver: bridge

@@ -1,0 +1,321 @@
+// =============================================================
+// 05. ADVANCED - Pipeline nâng cao: kết hợp tất cả
+// =============================================================
+// Parallel stages, shared libraries, notifications, rollback
+// =============================================================
+
+// ---- Shared Library (nếu có) ----
+// @Library('my-jenkins-library') _
+
+pipeline {
+    agent none  // Không dùng agent ở cấp global, mỗi stage tự chọn
+
+    // Lưu lịch sử builds
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '5'))
+        timeout(time: 30, unit: 'MINUTES')   // Tổng timeout toàn pipeline
+        timestamps()                          // Thêm timestamp vào log
+        ansiColor('xterm')                   // Màu sắc trong log
+        disableConcurrentBuilds()            // Không cho chạy song song 2 build cùng job
+        retry(2)                             // Tự retry toàn bộ pipeline nếu fail
+    }
+
+    triggers {
+        cron('H 2 * * *')          // Chạy lúc ~2am mỗi ngày (scheduled)
+        pollSCM('H/5 * * * *')     // Poll Git mỗi 5 phút
+    }
+
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['dev', 'staging', 'production'], description: 'Deploy target')
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag override')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip test stages')
+        booleanParam(name: 'FORCE_DEPLOY', defaultValue: false, description: 'Force deploy dù có lỗi lint')
+    }
+
+    environment {
+        APP_NAME     = 'advanced-app'
+        REGISTRY     = 'docker.io'
+        IMAGE_NAME   = "your-user/${APP_NAME}"
+        IMAGE_TAG    = "${params.IMAGE_TAG != 'latest' ? params.IMAGE_TAG : env.BUILD_NUMBER}"
+        DOCKER_CREDS = 'docker-hub-credentials'
+        SLACK_CHANNEL = '#jenkins-alerts'
+        ROLLBACK_TAG  = ''  // Sẽ được set động
+    }
+
+    stages {
+
+        // =========================================================
+        // STAGE 1: Prepare - Chạy trên agent nhẹ
+        // =========================================================
+        stage('🔍 Prepare') {
+            agent { label 'linux' }  // Chạy trên agent có label 'linux'
+            // agent any              // hoặc bất kỳ agent nào
+
+            steps {
+                script {
+                    // Lấy tag hiện tại để rollback nếu cần
+                    env.ROLLBACK_TAG = sh(
+                        script: "docker inspect ${IMAGE_NAME}:production-latest --format='{{.Config.Labels.version}}' 2>/dev/null || echo 'none'",
+                        returnStdout: true
+                    ).trim()
+
+                    echo """
+╔══════════════════════════════════════╗
+║        ADVANCED PIPELINE START       ║
+╠══════════════════════════════════════╣
+║ Job      : ${env.JOB_NAME}
+║ Build    : ${env.BUILD_NUMBER}
+║ Branch   : ${env.GIT_BRANCH ?: 'N/A'}
+║ Commit   : ${env.GIT_COMMIT?.take(8) ?: 'N/A'}
+║ Deploy   : ${params.DEPLOY_ENV}
+║ Rollback : ${env.ROLLBACK_TAG}
+╚══════════════════════════════════════╝
+                    """
+                }
+            }
+        }
+
+        // =========================================================
+        // STAGE 2: Parallel - Test, Lint, Security cùng lúc
+        // =========================================================
+        stage('🔄 Parallel Quality Checks') {
+            when {
+                expression { params.SKIP_TESTS == false }
+            }
+
+            // Chạy song song 3 task để tiết kiệm thời gian
+            parallel {
+
+                stage('Unit Tests') {
+                    agent { label 'linux' }
+                    steps {
+                        sh '''
+                            echo "=== Unit Tests ==="
+                            # npm test -- --ci --coverage
+                            sleep 2  # Giả lập test chạy
+                            echo "✅ 47 tests passed"
+                        '''
+                    }
+                    post {
+                        always {
+                            // junit 'test-results/**/*.xml'
+                            // publishHTML target: [reportDir: 'coverage', reportFiles: 'index.html']
+                            echo "Test report saved"
+                        }
+                    }
+                }
+
+                stage('ESLint') {
+                    agent { label 'linux' }
+                    steps {
+                        script {
+                            def lintResult = sh(
+                                script: '''
+                                    echo "=== ESLint ==="
+                                    # npx eslint src/ --format=checkstyle --output-file=lint-report.xml
+                                    sleep 1
+                                    echo "No lint errors found"
+                                    exit 0  # 0 = pass, 1 = warnings, 2 = errors
+                                ''',
+                                returnStatus: true
+                            )
+
+                            if (lintResult == 2) {
+                                if (params.FORCE_DEPLOY) {
+                                    unstable('Lint errors found but FORCE_DEPLOY=true')
+                                } else {
+                                    error('Lint errors found! Set FORCE_DEPLOY=true to proceed anyway.')
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Security Audit') {
+                    agent { label 'linux' }
+                    steps {
+                        sh '''
+                            echo "=== Security Audit ==="
+                            # npm audit --audit-level=high
+                            # trivy fs --severity HIGH,CRITICAL .
+                            sleep 1
+                            echo "✅ No critical vulnerabilities"
+                        '''
+                    }
+                }
+            }
+        }
+
+        // =========================================================
+        // STAGE 3: Build Docker image
+        // =========================================================
+        stage('🐳 Docker Build') {
+            agent { label 'linux' }
+            steps {
+                script {
+                    def fullTag = "${IMAGE_NAME}:${IMAGE_TAG}"
+                    echo "Building: ${fullTag}"
+
+                    sh """
+                        docker build \\
+                            --tag ${fullTag} \\
+                            --build-arg BUILD_NUMBER=${env.BUILD_NUMBER} \\
+                            --label version=${IMAGE_TAG} \\
+                            . 2>/dev/null || echo "Build skipped in demo mode"
+                    """
+
+                    // Push image (chỉ khi không phải dev)
+                    if (params.DEPLOY_ENV != 'dev') {
+                        withCredentials([usernamePassword(
+                            credentialsId: DOCKER_CREDS,
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )]) {
+                            sh """
+                                echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                                docker push ${fullTag} 2>/dev/null || echo "Push skipped in demo mode"
+                                docker logout
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        // =========================================================
+        // STAGE 4: Deploy với approval gate cho Production
+        // =========================================================
+        stage('🚀 Deploy') {
+            agent { label 'linux' }
+
+            steps {
+                script {
+                    def env_name = params.DEPLOY_ENV.toUpperCase()
+                    echo "Deploying to: ${env_name}"
+
+                    // === Gate: Yêu cầu approve cho Production ===
+                    if (params.DEPLOY_ENV == 'production') {
+                        def approver = input(
+                            message: "⚠️  Deploy ${APP_NAME} v${IMAGE_TAG} lên PRODUCTION?",
+                            ok: 'Deploy!',
+                            submitter: 'admin,devops-team',  // Chỉ những user này mới approve được
+                            parameters: [
+                                string(name: 'REASON', description: 'Lý do deploy production')
+                            ]
+                        )
+                        echo "Approved! Reason: ${approver}"
+                    }
+
+                    // Deploy
+                    sh """
+                        echo "=== Deploying to ${env_name} ==="
+                        echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
+                        echo "Deploy completed at \$(date)"
+                    """
+
+                    // Ghi deployment record
+                    sh """
+                        echo '{
+                            "version": "${IMAGE_TAG}",
+                            "env": "${params.DEPLOY_ENV}",
+                            "deployed_at": "'"\$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+                            "deployed_by": "${env.BUILD_USER_ID ?: 'jenkins'}",
+                            "build_number": ${env.BUILD_NUMBER}
+                        }' > deployment.json
+                        cat deployment.json
+                    """
+
+                    archiveArtifacts artifacts: 'deployment.json', allowEmptyArchive: true
+                }
+            }
+        }
+
+        // =========================================================
+        // STAGE 5: Smoke Tests & Verify
+        // =========================================================
+        stage('✅ Verify') {
+            agent { label 'linux' }
+            steps {
+                sh '''
+                    echo "=== Post-Deploy Verification ==="
+
+                    # Health check
+                    # URL="https://app.${DEPLOY_ENV}.example.com/health"
+                    # for i in 1 2 3 4 5; do
+                    #     STATUS=$(curl -sf -o /dev/null -w "%{http_code}" $URL)
+                    #     [ "$STATUS" = "200" ] && { echo "✅ Health OK"; break; }
+                    #     echo "Attempt $i failed, retrying..."
+                    #     sleep 10
+                    # done
+
+                    echo "✅ Verification passed"
+                '''
+            }
+        }
+    }
+
+    // =========================================================
+    // POST: Notifications & Rollback
+    // =========================================================
+    post {
+        always {
+            node('linux') {
+                script {
+                    def color  = currentBuild.result == 'SUCCESS' ? 'good' : 'danger'
+                    def icon   = currentBuild.result == 'SUCCESS' ? '✅' : '❌'
+                    def status = currentBuild.result ?: 'SUCCESS'
+
+                    echo """
+${icon} Build ${status}
+Job       : ${env.JOB_NAME}
+Build     : ${env.BUILD_NUMBER}
+Duration  : ${currentBuild.durationString}
+Deploy To : ${params.DEPLOY_ENV}
+                    """
+
+                    // === Slack Notification ===
+                    // slackSend(
+                    //     channel: SLACK_CHANNEL,
+                    //     color: color,
+                    //     message: "${icon} *${env.JOB_NAME}* #${env.BUILD_NUMBER} - ${status}\n" +
+                    //              "Deploy: ${params.DEPLOY_ENV} | Duration: ${currentBuild.durationString}"
+                    // )
+
+                    // === Email Notification ===
+                    // emailext(
+                    //     subject: "${icon} Jenkins: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${status}",
+                    //     body: groovyTemplate('email-template.html'),
+                    //     to: 'team@company.com'
+                    // )
+
+                    // === Teams Notification ===
+                    // office365ConnectorSend(
+                    //     webhookUrl: env.TEAMS_WEBHOOK,
+                    //     message: "${icon} ${env.JOB_NAME} #${env.BUILD_NUMBER}: ${status}"
+                    // )
+                }
+            }
+        }
+
+        failure {
+            node('linux') {
+                script {
+                    if (params.DEPLOY_ENV == 'production' && env.ROLLBACK_TAG != 'none') {
+                        echo "🔄 Production deploy failed - initiating rollback to: ${env.ROLLBACK_TAG}"
+                        sh """
+                            echo "Rolling back to version: ${env.ROLLBACK_TAG}"
+                            # docker service update --image ${IMAGE_NAME}:${env.ROLLBACK_TAG} ${APP_NAME}
+                        """
+                    }
+                }
+            }
+        }
+
+        cleanup {
+            // Luôn dọn workspace sau khi chạy xong
+            node('linux') {
+                cleanWs()
+            }
+        }
+    }
+}

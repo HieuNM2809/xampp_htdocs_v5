@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  zincsearch:
+    image: public.ecr.aws/zinclabs/zincsearch:latest
+    container_name: zincsearch
+    restart: unless-stopped
+    environment:
+      ZINC_DATA_PATH: /data           # Thư mục lưu data bên trong container
+      ZINC_FIRST_ADMIN_USER: admin    # Tài khoản admin
+      ZINC_FIRST_ADMIN_PASSWORD: Complexpass#123
+    ports:
+      - "4080:4080"                   # host:container
+    volumes:
+      - zinc_data:/data               # Dùng named volume (persistent)
+      # Hoặc mount thư mục cụ thể:
+      # - ./zinc_data:/data
+
+volumes:
+  zinc_data:
+    driver: local

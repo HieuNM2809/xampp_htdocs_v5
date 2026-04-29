@@ -1,0 +1,269 @@
+// =============================================================
+// 04. DOCKER PIPELINE - Build & Deploy Docker images
+// =============================================================
+// Mục tiêu: Build Docker image, push lên registry, deploy
+// Yêu cầu: Docker cài trên Jenkins agent
+//          Plugin: Docker Pipeline, Docker Commons
+// =============================================================
+
+pipeline {
+    agent any
+
+    environment {
+        // === Docker Registry settings ===
+        REGISTRY      = 'docker.io'                     // Docker Hub
+        // REGISTRY   = 'ghcr.io'                       // GitHub Container Registry
+        // REGISTRY   = 'registry.your-company.com'     // Private registry
+
+        IMAGE_NAME    = 'your-dockerhub-user/my-node-app'
+        IMAGE_TAG     = "${env.GIT_BRANCH?.replace('/', '-') ?: 'latest'}-${env.BUILD_NUMBER}"
+        IMAGE_LATEST  = "${IMAGE_NAME}:latest"
+        IMAGE_TAGGED  = "${IMAGE_NAME}:${IMAGE_TAG}"
+
+        // Credentials ID được cấu hình trong:
+        // Manage Jenkins > Credentials > System > Global credentials
+        DOCKER_CREDS  = 'docker-hub-credentials'  // Username + Password credential
+    }
+
+    stages {
+
+        // --- Stage 1: Checkout ---
+        stage('Checkout') {
+            steps {
+                echo "📦 Checkout source..."
+                // checkout scm
+
+                // Demo: Tạo Dockerfile và app mẫu
+                sh '''
+                    cat > Dockerfile << 'EOF'
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Cài deps trước (tận dụng layer cache)
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy source
+COPY . .
+
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget -qO- http://localhost:3000/health || exit 1
+
+CMD ["node", "server.js"]
+EOF
+
+                    cat > server.js << 'EOF'
+const http = require('http');
+const server = http.createServer((req, res) => {
+    if (req.url === '/health') {
+        res.writeHead(200);
+        res.end(JSON.stringify({ status: 'ok' }));
+    } else {
+        res.writeHead(200);
+        res.end('Hello from Jenkins + Docker!');
+    }
+});
+server.listen(3000, () => console.log('Server running on :3000'));
+EOF
+
+                    echo '{"name":"demo","version":"1.0.0","main":"server.js"}' > package.json
+                '''
+            }
+        }
+
+        // --- Stage 2: Build Docker image ---
+        stage('Docker Build') {
+            steps {
+                script {
+                    echo "🐳 Building Docker image: ${IMAGE_TAGGED}"
+
+                    // === Phương án 1: Dùng sh command ===
+                    sh """
+                        docker build \\
+                            --tag ${IMAGE_TAGGED} \\
+                            --tag ${IMAGE_LATEST} \\
+                            --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \\
+                            --build-arg VERSION=${IMAGE_TAG} \\
+                            --label "jenkins.build=${env.BUILD_NUMBER}" \\
+                            --label "git.commit=${env.GIT_COMMIT ?: 'unknown'}" \\
+                            .
+                    """
+
+                    // === Phương án 2: Dùng Docker Pipeline plugin ===
+                    // def image = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "--no-cache .")
+
+                    echo "✅ Image built: ${IMAGE_TAGGED}"
+                }
+            }
+        }
+
+        // --- Stage 3: Scan image (security) ---
+        stage('Image Security Scan') {
+            steps {
+                sh '''
+                    echo "=== Security Scan ==="
+                    # Trivy (phổ biến nhất, miễn phí)
+                    # trivy image --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_TAGGED}
+
+                    # Snyk
+                    # snyk container test ${IMAGE_TAGGED}
+
+                    # Docker Scout (tích hợp sẵn Docker Hub)
+                    # docker scout cves ${IMAGE_TAGGED}
+
+                    echo "Security scan passed ✅ (demo mode)"
+                '''
+            }
+        }
+
+        // --- Stage 4: Test image ---
+        stage('Test Image') {
+            steps {
+                script {
+                    echo "🧪 Testing Docker image..."
+
+                    sh """
+                        # Chạy container tạm
+                        docker run -d \\
+                            --name test-container-${BUILD_NUMBER} \\
+                            -p 3001:3000 \\
+                            ${IMAGE_TAGGED}
+
+                        # Đợi container healthy
+                        sleep 3
+
+                        # Test health endpoint
+                        STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/health 2>/dev/null || echo "failed")
+                        echo "Health check status: \$STATUS"
+
+                        # Dọn dẹp
+                        docker stop test-container-${BUILD_NUMBER} || true
+                        docker rm  test-container-${BUILD_NUMBER} || true
+                    """
+                }
+            }
+            post {
+                failure {
+                    sh """
+                        docker stop test-container-${BUILD_NUMBER} 2>/dev/null || true
+                        docker rm  test-container-${BUILD_NUMBER} 2>/dev/null || true
+                    """
+                }
+            }
+        }
+
+        // --- Stage 5: Push lên registry ---
+        stage('Push to Registry') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                    branch 'release/*'
+                }
+            }
+            steps {
+                script {
+                    echo "📤 Pushing image to registry..."
+
+                    // === Phương án 1: Dùng Jenkins credentials binding ===
+                    withCredentials([usernamePassword(
+                        credentialsId: DOCKER_CREDS,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh """
+                            echo \$DOCKER_PASS | docker login ${REGISTRY} -u \$DOCKER_USER --password-stdin
+                            docker push ${IMAGE_TAGGED}
+                            docker push ${IMAGE_LATEST}
+                            docker logout ${REGISTRY}
+                        """
+                    }
+
+                    // === Phương án 2: Docker Pipeline plugin ===
+                    // docker.withRegistry("https://${REGISTRY}", DOCKER_CREDS) {
+                    //     def image = docker.image(IMAGE_TAGGED)
+                    //     image.push()
+                    //     image.push('latest')
+                    // }
+
+                    echo "✅ Image pushed successfully"
+                }
+            }
+        }
+
+        // --- Stage 6: Deploy với Docker ---
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "🚀 Deploying..."
+
+                    sh """
+                        # Dừng container cũ (nếu có)
+                        docker stop my-node-app 2>/dev/null || true
+                        docker rm   my-node-app 2>/dev/null || true
+
+                        # Chạy container mới
+                        docker run -d \\
+                            --name my-node-app \\
+                            --restart unless-stopped \\
+                            -p 3000:3000 \\
+                            -e NODE_ENV=production \\
+                            ${IMAGE_TAGGED}
+
+                        echo "Container started:"
+                        docker ps -f name=my-node-app
+                    """
+
+                    // === Deploy bằng docker-compose ===
+                    // sh """
+                    //     export IMAGE_TAG=${IMAGE_TAG}
+                    //     docker-compose -f docker-compose.prod.yml up -d --no-deps app
+                    // """
+
+                    // === Deploy bằng Docker Swarm ===
+                    // sh "docker service update --image ${IMAGE_TAGGED} my-stack_app"
+                }
+            }
+        }
+
+        // --- Stage 7: Smoke Test sau deploy ---
+        stage('Smoke Test') {
+            steps {
+                sleep(time: 5, unit: 'SECONDS')  // Đợi app khởi động
+                sh '''
+                    echo "=== Running Smoke Tests ==="
+                    STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health 2>/dev/null || echo "000")
+                    echo "Health endpoint: $STATUS"
+
+                    if [ "$STATUS" = "200" ]; then
+                        echo "✅ Smoke test PASSED"
+                    else
+                        echo "❌ Smoke test FAILED (status: $STATUS)"
+                        exit 1
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh '''
+                # Dọn Docker images cũ (giữ lại 3 image gần nhất)
+                docker image prune -f --filter "label=jenkins.build" 2>/dev/null || true
+
+                # Dọn file tạm
+                rm -f Dockerfile server.js package.json
+            '''
+        }
+        success {
+            echo "✅ Docker pipeline thành công! Image: ${IMAGE_TAGGED}"
+        }
+        failure {
+            echo "❌ Pipeline thất bại - rollback nếu cần"
+            // Rollback: docker service rollback my-stack_app
+        }
+    }
+}

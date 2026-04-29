@@ -1,0 +1,153 @@
+// =============================================================
+// 02. SCHEDULES - Cron Triggers & Timed Builds
+// =============================================================
+// Mục tiêu: Dùng triggers để tự động chạy pipeline theo lịch
+// =============================================================
+
+pipeline {
+    agent any
+
+    // =========================================================
+    // TRIGGERS - Kích hoạt pipeline tự động
+    // =========================================================
+    triggers {
+
+        // --- Cron: Chạy theo lịch cố định ---
+        // Cú pháp: MINUTE HOUR DAY_OF_MONTH MONTH DAY_OF_WEEK
+        // Ký tự đặc biệt:
+        //   *  = mọi giá trị
+        //   ,  = liệt kê nhiều giá trị (0,30)
+        //   -  = khoảng giá trị (1-5)
+        //   /  = bước nhảy (*/15 = mỗi 15 phút)
+        //   H  = Hash - Jenkins tự phân tán để tránh spike (KHUYÊN DÙNG)
+
+        // Ví dụ các lịch phổ biến:
+        // cron('0 8 * * 1-5')     // 8:00 sáng, Thứ 2 - Thứ 6
+        // cron('0 0 * * *')       // Mỗi ngày lúc nửa đêm
+        // cron('H/15 * * * *')    // Mỗi 15 phút (H = hash giảm spike)
+        // cron('H 2 * * *')       // Mỗi ngày khoảng 2:xx sáng
+        // cron('H H * * 0')       // Mỗi Chủ nhật
+        // cron('@midnight')        // Alias = 0 0 * * *
+        // cron('@weekly')          // Alias = H H * * 0
+        // cron('@monthly')         // Alias = H H 1 * *
+
+        cron('H/30 * * * *')  // Chạy mỗi 30 phút (dùng cho demo)
+
+        // --- pollSCM: Kiểm tra repo theo lịch, build khi có commit mới ---
+        // pollSCM('H/5 * * * *')  // Poll git mỗi 5 phút
+
+        // --- upstream: Trigger khi pipeline khác hoàn thành ---
+        // upstream(upstreamProjects: 'other-job', threshold: hudson.model.Result.SUCCESS)
+    }
+
+    environment {
+        TZ          = 'Asia/Ho_Chi_Minh'   // Timezone cho log
+        RUN_TYPE    = 'scheduled'
+    }
+
+    stages {
+
+        // --- Stage 1: Xác định loại trigger ---
+        stage('Detect Trigger') {
+            steps {
+                script {
+                    // Kiểm tra build có được trigger thủ công không
+                    def causes = currentBuild.getBuildCauses()
+                    echo "Build causes: ${causes}"
+
+                    def isManual   = causes.any { it._class?.contains('UserIdCause') }
+                    def isScheduled = causes.any { it._class?.contains('TimerTriggerCause') }
+                    def isSCM      = causes.any { it._class?.contains('SCMTriggerCause') }
+
+                    if (isManual)    echo "🖐️  Triggered MANUALLY by user"
+                    if (isScheduled) echo "⏰  Triggered by SCHEDULE (cron)"
+                    if (isSCM)       echo "📦  Triggered by SCM CHANGE"
+
+                    env.IS_MANUAL = isManual.toString()
+                }
+            }
+        }
+
+        // --- Stage 2: Scheduled Backup Task ---
+        stage('Scheduled Backup') {
+            steps {
+                script {
+                    def timestamp = sh(
+                        script: 'date +%Y%m%d_%H%M%S',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "=== Running Scheduled Backup: ${timestamp} ==="
+
+                    sh """
+                        mkdir -p /tmp/backups
+                        echo 'Backup at ${timestamp}' > /tmp/backups/backup_${timestamp}.txt
+                        echo 'Backup file created successfully'
+                        ls -la /tmp/backups/
+                    """
+                }
+            }
+        }
+
+        // --- Stage 3: Chạy theo ngày trong tuần ---
+        stage('Weekday Only Task') {
+            when {
+                // Chỉ chạy vào Thứ 2-6 (day of week 1-5 trong cron)
+                expression {
+                    def dayOfWeek = sh(
+                        script: 'date +%u',  // 1=Mon, 7=Sun
+                        returnStdout: true
+                    ).trim().toInteger()
+                    return dayOfWeek >= 1 && dayOfWeek <= 5
+                }
+            }
+            steps {
+                echo "✅ Running weekday-only task..."
+                sh 'echo "Weekday task executed at $(date)"'
+            }
+        }
+
+        // --- Stage 4: Task chỉ chạy thủ công ---
+        stage('Manual Only Task') {
+            when {
+                expression { env.IS_MANUAL == 'true' }
+            }
+            steps {
+                echo "🖐️  This stage only runs when manually triggered"
+                input message: 'Xác nhận chạy manual task?', ok: 'Đồng ý'
+                sh 'echo "Manual task executed"'
+            }
+        }
+
+        // --- Stage 5: Cleanup logs cũ (scheduled maintenance) ---
+        stage('Cleanup Old Logs') {
+            steps {
+                sh '''
+                    echo "=== Cleaning up old backup files (> 7 days) ==="
+                    find /tmp/backups -name "*.txt" -mtime +7 -delete 2>/dev/null || true
+                    echo "Cleanup done"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def now = sh(script: 'date "+%Y-%m-%d %H:%M:%S"', returnStdout: true).trim()
+                echo "Job [${env.JOB_NAME}] completed at ${now}"
+                echo "Duration: ${currentBuild.durationString}"
+            }
+        }
+        success {
+            echo "✅ Scheduled job hoàn thành thành công"
+            // Thực tế: Gửi email, Slack, Teams notification...
+            // emailext subject: "✅ Scheduled job success: ${env.JOB_NAME}",
+            //          body: "Build #${env.BUILD_NUMBER} succeeded",
+            //          to: 'team@company.com'
+        }
+        failure {
+            echo "❌ Scheduled job THẤT BẠI - cần kiểm tra!"
+        }
+    }
+}

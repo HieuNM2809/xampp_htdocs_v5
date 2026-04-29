@@ -1,0 +1,119 @@
+// =============================================================
+// 01. BASIC CMD - Chạy lệnh dòng lệnh cơ bản
+// =============================================================
+// Mục tiêu: Hiểu cú pháp Declarative Pipeline, chạy lệnh sh/bat
+// =============================================================
+
+pipeline {
+    // 'any' = chạy trên bất kỳ agent (máy) nào sẵn có
+    agent any
+
+    // --- Biến môi trường toàn cục ---
+    environment {
+        APP_NAME   = 'my-app'
+        BUILD_DATE = sh(script: 'date +%Y-%m-%d', returnStdout: true).trim()
+    }
+
+    stages {
+
+        // --- Stage 1: In thông tin môi trường ---
+        stage('Info') {
+            steps {
+                echo "=== Build Info ==="
+                echo "App     : ${APP_NAME}"
+                echo "Date    : ${BUILD_DATE}"
+                echo "Job     : ${env.JOB_NAME}"
+                echo "Build # : ${env.BUILD_NUMBER}"
+                echo "Node    : ${env.NODE_NAME}"
+            }
+        }
+
+        // --- Stage 2: Chạy lệnh Shell (Linux/Mac) ---
+        stage('Shell Commands') {
+            steps {
+                sh '''
+                    echo "--- Thư mục hiện tại ---"
+                    pwd
+
+                    echo "--- Danh sách file ---"
+                    ls -la
+
+                    echo "--- Tạo file tạm ---"
+                    echo "Hello Jenkins" > hello.txt
+                    cat hello.txt
+                '''
+            }
+        }
+
+        // --- Stage 3: Chạy lệnh BAT (Windows) ---
+        // Dùng khi Jenkins chạy trên Windows agent
+        stage('Bat Commands (Windows)') {
+            when {
+                // Chỉ chạy stage này nếu đang ở Windows agent
+                expression { isUnix() == false }
+            }
+            steps {
+                bat '''
+                    echo === Windows CMD ===
+                    echo Current dir:
+                    cd
+                    dir
+                '''
+            }
+        }
+
+        // --- Stage 4: Capture output từ lệnh ---
+        stage('Capture Output') {
+            steps {
+                script {
+                    // returnStdout: true => lưu output vào biến
+                    def hostname = sh(script: 'hostname', returnStdout: true).trim()
+                    def diskUsage = sh(script: 'df -h / | tail -1 | awk \'{print $5}\'', returnStdout: true).trim()
+
+                    echo "Hostname   : ${hostname}"
+                    echo "Disk Usage : ${diskUsage}"
+
+                    // returnStatus: true => lấy exit code (0 = thành công)
+                    def exitCode = sh(script: 'ls /nonexistent 2>/dev/null', returnStatus: true)
+                    echo "Exit code  : ${exitCode}"  // sẽ là 2 (lỗi), không fail pipeline
+                }
+            }
+        }
+
+        // --- Stage 5: Điều kiện rẽ nhánh ---
+        stage('Conditional Logic') {
+            steps {
+                script {
+                    def branch = env.GIT_BRANCH ?: 'main'
+                    echo "Branch: ${branch}"
+
+                    if (branch == 'main' || branch == 'origin/main') {
+                        echo ">> Đây là branch PRODUCTION"
+                    } else if (branch.startsWith('feature/')) {
+                        echo ">> Đây là branch FEATURE: ${branch}"
+                    } else {
+                        echo ">> Branch khác: ${branch}"
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Post Actions: chạy sau khi pipeline kết thúc ---
+    post {
+        always {
+            echo "Pipeline hoàn tất - Status: ${currentBuild.result ?: 'SUCCESS'}"
+            // Dọn file tạm
+            sh 'rm -f hello.txt'
+        }
+        success {
+            echo "✅ Pipeline THÀNH CÔNG!"
+        }
+        failure {
+            echo "❌ Pipeline THẤT BẠI!"
+        }
+        unstable {
+            echo "⚠️  Pipeline KHÔNG ỔN ĐỊNH (test failures, etc.)"
+        }
+    }
+}

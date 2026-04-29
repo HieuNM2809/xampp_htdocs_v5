@@ -1,0 +1,229 @@
+// =============================================================
+// 03. NODE.JS PIPELINE - CI/CD cho ứng dụng Node.js
+// =============================================================
+// Mục tiêu: Install deps, test, build, và deploy Node.js app
+// Yêu cầu: Plugin NodeJS (Manage Jenkins > Plugins > NodeJS)
+// =============================================================
+
+pipeline {
+    agent any
+
+    // =========================================================
+    // Dùng NodeJS tool được cấu hình trong Jenkins Global Tools
+    // Manage Jenkins > Global Tool Configuration > NodeJS
+    // =========================================================
+    tools {
+        // 'NodeJS 20' = tên bạn đặt trong Global Tool Configuration
+        nodejs 'NodeJS 20'
+    }
+
+    environment {
+        NODE_ENV  = 'production'
+        APP_PORT  = '3000'
+        NPM_CACHE = "${env.WORKSPACE}/.npm-cache"
+    }
+
+    parameters {
+        choice(
+            name: 'DEPLOY_ENV',
+            choices: ['dev', 'staging', 'production'],
+            description: 'Chọn môi trường deploy'
+        )
+        booleanParam(
+            name: 'RUN_TESTS',
+            defaultValue: true,
+            description: 'Có chạy unit tests không?'
+        )
+        booleanParam(
+            name: 'SKIP_BUILD',
+            defaultValue: false,
+            description: 'Bỏ qua bước build (dùng khi hotfix)'
+        )
+    }
+
+    stages {
+
+        // --- Stage 1: Checkout source code ---
+        stage('Checkout') {
+            steps {
+                echo "📦 Checking out source code..."
+                // Khi dùng SCM, Jenkins tự checkout
+                // checkout scm
+
+                // Hoặc checkout manual:
+                // git branch: 'main', url: 'https://github.com/your-org/your-repo.git'
+
+                // Demo: Tạo project Node.js mẫu
+                sh '''
+                    mkdir -p src
+                    echo "Project cloned from: ${GIT_URL:-demo-mode}"
+                '''
+            }
+        }
+
+        // --- Stage 2: Kiểm tra môi trường ---
+        stage('Environment Check') {
+            steps {
+                sh '''
+                    echo "=== Node.js Environment ==="
+                    node --version
+                    npm --version
+                    echo "NODE_ENV: $NODE_ENV"
+                    echo "Workspace: $WORKSPACE"
+                    echo "Deploy to: $DEPLOY_ENV"
+                '''
+            }
+        }
+
+        // --- Stage 3: Install dependencies ---
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    echo "=== Installing dependencies ==="
+                    # --ci: dùng package-lock.json (nhanh hơn, deterministic)
+                    # --cache: tái sử dụng cache để tăng tốc
+                    npm ci --cache $NPM_CACHE --prefer-offline 2>/dev/null \
+                        || npm install --cache $NPM_CACHE
+
+                    echo "Dependencies installed:"
+                    npm list --depth=0
+                '''
+            }
+        }
+
+        // --- Stage 4: Lint code ---
+        stage('Lint') {
+            steps {
+                sh '''
+                    echo "=== Running ESLint ==="
+                    # npm run lint         # nếu có script lint trong package.json
+                    # npx eslint src/      # hoặc chạy trực tiếp
+                    echo "Lint passed ✅"
+                '''
+            }
+        }
+
+        // --- Stage 5: Unit Tests ---
+        stage('Unit Tests') {
+            when {
+                expression { params.RUN_TESTS == true }
+            }
+            steps {
+                sh '''
+                    echo "=== Running Unit Tests ==="
+                    # npm test
+                    # npm run test:coverage   # với coverage report
+
+                    # Tạo dummy test report để demo
+                    mkdir -p test-results
+                    cat > test-results/junit.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Unit Tests" tests="3" failures="0">
+    <testcase name="should add numbers" classname="math.test" time="0.01"/>
+    <testcase name="should return user" classname="user.test" time="0.02"/>
+    <testcase name="should validate email" classname="validator.test" time="0.01"/>
+  </testsuite>
+</testsuites>
+EOF
+                    echo "All 3 tests passed ✅"
+                '''
+            }
+            post {
+                always {
+                    // Publish JUnit test results
+                    junit testResults: 'test-results/*.xml', allowEmptyResults: true
+                }
+            }
+        }
+
+        // --- Stage 6: Security Audit ---
+        stage('Security Audit') {
+            steps {
+                sh '''
+                    echo "=== Security Audit ==="
+                    # npm audit --audit-level=high  # fail nếu có lỗ hổng high/critical
+                    npm audit --audit-level=critical 2>/dev/null || true  # warn only
+                    echo "Audit complete"
+                '''
+            }
+        }
+
+        // --- Stage 7: Build (TypeScript / Webpack / etc.) ---
+        stage('Build') {
+            when {
+                expression { params.SKIP_BUILD == false }
+            }
+            steps {
+                sh '''
+                    echo "=== Building application ==="
+                    # npm run build          # Compile TypeScript, bundle, etc.
+                    # npm run build:prod
+
+                    mkdir -p dist
+                    echo "Build artifact created"
+                    ls -la dist/
+                '''
+            }
+        }
+
+        // --- Stage 8: Archive Artifacts ---
+        stage('Archive') {
+            steps {
+                script {
+                    def artifactVersion = sh(
+                        script: "node -p \"require('./package.json').version\" 2>/dev/null || echo '1.0.0'",
+                        returnStdout: true
+                    ).trim()
+                    echo "Archiving version: ${artifactVersion}"
+                }
+
+                // Lưu file build để dùng sau hoặc trong các pipeline khác
+                archiveArtifacts artifacts: 'dist/**/*', allowEmptyArchive: true
+            }
+        }
+
+        // --- Stage 9: Deploy (tuỳ env) ---
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "=== Deploying to ${params.DEPLOY_ENV} ==="
+
+                    switch(params.DEPLOY_ENV) {
+                        case 'dev':
+                            sh 'echo "Deploy to DEV server..."'
+                            // sh 'rsync -avz dist/ user@dev-server:/app/'
+                            break
+
+                        case 'staging':
+                            sh 'echo "Deploy to STAGING server..."'
+                            // sh 'pm2 restart app-staging'
+                            break
+
+                        case 'production':
+                            // Yêu cầu xác nhận trước khi deploy production
+                            input message: "⚠️  Xác nhận deploy lên PRODUCTION?", ok: "Deploy!"
+                            sh 'echo "Deploy to PRODUCTION server..."'
+                            // sh 'pm2 restart app-production'
+                            break
+                    }
+
+                    echo "✅ Deploy to ${params.DEPLOY_ENV} completed"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'rm -rf test-results dist src 2>/dev/null || true'
+            echo "Build #${env.BUILD_NUMBER} finished: ${currentBuild.result ?: 'SUCCESS'}"
+        }
+        success {
+            echo "✅ Node.js pipeline thành công!"
+        }
+        failure {
+            echo "❌ Node.js pipeline thất bại!"
+        }
+    }
+}

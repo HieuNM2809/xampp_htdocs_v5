@@ -1,0 +1,50 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "description": "Lỗi JS cơ bản kèm stack trace",
+      "input": "Tôi bị lỗi này: TypeError: Cannot read properties of undefined (reading 'map'). Đây là code: const result = data.items.map(x => x.id)",
+      "expected_behaviors": [
+        "Hỏi: data.items có giá trị gì khi bị lỗi?",
+        "Đề nghị log data trước khi gọi .map()",
+        "Không kết luận ngay là 'data bị null' mà yêu cầu tái hiện bug trước",
+        "Gợi ý dùng optional chaining: data?.items?.map()"
+      ],
+      "should_not": [
+        "Ngay lập tức sửa code mà không hỏi thêm thông tin",
+        "Đưa ra nhiều giả thuyết cùng một lúc",
+        "Bỏ qua Giai đoạn 1 (tái hiện bug)"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "description": "Bug xuất hiện không thường xuyên (intermittent)",
+      "input": "Khi nào bị lỗi, khi nào thì không. Code thanh toán của tôi thỉnh thoảng bị trừ tiền 2 lần.",
+      "expected_behaviors": [
+        "Nhận diện đây có thể là race condition hoặc double-submit",
+        "Hỏi: có log không? Có thể tái hiện được không?",
+        "Đề nghị thêm idempotency key để chống trùng lặp",
+        "Đề nghị kiểm tra tab Network xem có 2 request gửi đi không"
+      ],
+      "should_not": [
+        "Nói ngay 'thêm flag để tránh double call' mà không tìm nguyên nhân gốc",
+        "Bỏ qua tính chất intermittent của bug"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "description": "Chạy tốt ở local nhưng fail trên production",
+      "input": "Code chạy tốt ở máy tôi nhưng lên server thì bị lỗi 500",
+      "expected_behaviors": [
+        "Hỏi ngay về sự khác biệt môi trường giữa local và server",
+        "Đề nghị đọc server logs để tìm thông báo lỗi",
+        "Gợi ý so sánh phiên bản Node/PHP và env vars",
+        "Không giả định nguyên nhân cụ thể trước khi có bằng chứng"
+      ],
+      "should_not": [
+        "Giả định lỗi nằm trong code mà không cần bằng chứng",
+        "Sửa code trước khi đọc server logs"
+      ]
+    }
+  ]
+}

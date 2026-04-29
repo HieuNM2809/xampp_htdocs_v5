@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Posts — SWR & cache nâng cao</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; line-height: 1.5; }
+    body { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    #status { font-size: 0.9rem; color: #444; margin-bottom: 0.35rem; }
+    #status.offline { color: #b45309; }
+    #hint { font-size: 0.85rem; color: #059669; margin-bottom: 1rem; min-height: 1.25em; }
+    ul { list-style: none; padding: 0; }
+    li { border-bottom: 1px solid #eee; padding: 0.75rem 0; }
+    .id { font-weight: 600; color: #2563eb; margin-right: 0.5rem; }
+    h1 { font-size: 1.25rem; }
+    .note {
+      font-size: 0.85rem;
+      color: #555;
+      background: #f8fafc;
+      border-left: 3px solid #64748b;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .note code { font-size: 0.88em; }
+  </style>
+</head>
+<body>
+  <h1>Bản nâng cao — stale-while-revalidate</h1>
+  <p class="note">
+    Có cache: danh sách hiển thị <strong>ngay</strong>; SW <code>fetch</code> nền, cập nhật cache và gửi
+    <code>postMessage</code> → trang đọc bản mới qua <code>caches.match</code> (không <code>fetch</code> lại, tránh vòng lặp).
+    Xem thêm <code>CACHE-ADVANCED.md</code> ở thư mục cha.
+  </p>
+  <p id="status">Đang tải…</p>
+  <p id="hint" aria-live="polite"></p>
+  <ul id="list"></ul>
+  <p><a href="../index.html">← Ví dụ cơ bản</a></p>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

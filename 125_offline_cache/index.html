@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Posts — online / offline</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; line-height: 1.5; }
+    body { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    #status { font-size: 0.9rem; color: #444; margin-bottom: 1rem; }
+    #status.offline { color: #b45309; }
+    ul { list-style: none; padding: 0; }
+    li { border-bottom: 1px solid #eee; padding: 0.75rem 0; }
+    .id { font-weight: 600; color: #2563eb; margin-right: 0.5rem; }
+    h1 { font-size: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Bài viết (jsonplaceholder)</h1>
+  <p id="status">Đang tải…</p>
+  <ul id="list"></ul>
+  <p><a href="advanced/index.html">Ví dụ nâng cao (SWR) →</a></p>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

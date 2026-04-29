@@ -1,0 +1,65 @@
+version: '3.4'
+
+services:
+  # 1. Cơ sở dữ liệu cache (Redis)
+  redis:
+    image: redis:5.0-alpine
+    container_name: sentry-redis
+    restart: always
+    volumes:
+      - sentry-redis:/data
+
+  # 2. Cơ sở dữ liệu chính (PostgreSQL)
+  postgres:
+    image: postgres:9.6-alpine
+    container_name: sentry-postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_USER: sentry
+      POSTGRES_DB: sentry
+    volumes:
+      - sentry-postgres:/var/lib/postgresql/data
+
+  # 3. Máy chủ Sentry Web Giao diện
+  sentry-web:
+    image: sentry:9.1.2
+    container_name: sentry-web
+    restart: always
+    environment: &sentry_env
+      SENTRY_SECRET_KEY: 'sentry-secret-key-super-secret-change-me'
+      SENTRY_REDIS_HOST: redis
+      SENTRY_POSTGRES_HOST: postgres
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: secretpassword
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - '9000:9000'
+
+  # 4. Sentry Worker (Xử lý tác vụ nền)
+  sentry-worker:
+    image: sentry:9.1.2
+    container_name: sentry-worker
+    command: run worker
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    environment: *sentry_env
+      
+  # 5. Sentry Cron (Lên lịch chạy định kỳ)
+  sentry-cron:
+    image: sentry:9.1.2
+    container_name: sentry-cron
+    command: run cron
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    environment: *sentry_env
+
+volumes:
+  sentry-redis:
+  sentry-postgres:

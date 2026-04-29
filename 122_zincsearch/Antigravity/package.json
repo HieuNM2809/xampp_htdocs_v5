@@ -1,0 +1,20 @@
+{
+  "name": "zincsearch-examples",
+  "version": "1.0.0",
+  "description": "ZincSearch examples from basic to advanced",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "basic": "node 01_basic/01_index_management.js",
+    "crud": "node 02_crud/02_document_crud.js",
+    "search": "node 03_search/03_basic_search.js",
+    "advanced-search": "node 04_advanced_search/04_advanced_search.js",
+    "aggregation": "node 05_aggregation/05_aggregation.js",
+    "bulk": "node 06_bulk/06_bulk_operations.js",
+    "mapping": "node 07_mapping/07_mapping_analyzer.js",
+    "realworld": "node 08_realworld/08_ecommerce_search.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

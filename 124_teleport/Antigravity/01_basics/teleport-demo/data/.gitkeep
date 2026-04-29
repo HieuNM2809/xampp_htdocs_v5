@@ -1,0 +1,4 @@
+# Thư mục này lưu dữ liệu runtime của Teleport
+# (certificates, SQLite database, audit logs,...)
+# Được mount vào /var/lib/teleport trong container
+.gitkeep

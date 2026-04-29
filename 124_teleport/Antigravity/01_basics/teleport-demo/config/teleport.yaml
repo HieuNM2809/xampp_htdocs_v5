@@ -1,0 +1,36 @@
+# config/teleport.yaml
+version: v3
+teleport:
+  nodename: teleport-demo
+  data_dir: /var/lib/teleport
+  log:
+    output: stderr
+    severity: INFO
+    format:
+      output: text
+
+auth_service:
+  enabled: true
+  cluster_name: demo-cluster
+  listen_addr: 0.0.0.0:3025
+  tokens:
+    # Token để node SSH join cluster
+    - "node:demo-node-token-12345"
+    # Token để kube agent join cluster  
+    - "kube:demo-kube-token-12345"
+
+proxy_service:
+  enabled: true
+  listen_addr: 0.0.0.0:3023
+  web_listen_addr: 0.0.0.0:443
+  tunnel_listen_addr: 0.0.0.0:3024
+  # Tắt HTTPS verification cho local dev
+  https_keypairs: []
+  acme: {}
+
+ssh_service:
+  enabled: true
+  listen_addr: 0.0.0.0:3022
+  labels:
+    env: demo
+    role: all-in-one

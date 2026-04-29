@@ -1,0 +1,3 @@
+# Thư mục này lưu log files của Teleport
+# Được mount vào /var/log/teleport trong container
+.gitkeep

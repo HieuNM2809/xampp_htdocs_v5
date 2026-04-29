@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"    # Jenkins Web UI
+      - "50000:50000"  # Agent port
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false  # Bỏ qua setup wizard (dev only)
+    networks:
+      - jenkins_net
+
+  # (Tuỳ chọn) Jenkins Agent chạy Docker
+  jenkins-agent:
+    image: jenkins/inbound-agent:latest
+    container_name: jenkins-agent
+    restart: unless-stopped
+    depends_on:
+      - jenkins
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_AGENT_NAME=docker-agent
+      # Thay bằng secret token từ Jenkins UI
+      - JENKINS_SECRET=your_agent_secret_here
+    networks:
+      - jenkins_net
+
+networks:
+  jenkins_net:
+    driver: bridge
+
+volumes:
+  jenkins_home:
+    driver: local
