@@ -1,0 +1,24 @@
+{
+  "name": "nodejs-revalidate-cache-examples",
+  "version": "1.0.0",
+  "description": "Node.js Cache Revalidation Examples - Basic to Advanced",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "01-basic": "node 01_basic_memory_cache.js",
+    "02-ttl": "node 02_ttl_cache.js",
+    "03-stale-while-revalidate": "node 03_stale_while_revalidate.js",
+    "04-lru": "node 04_lru_cache.js",
+    "05-redis": "node 05_redis_cache.js",
+    "06-http-cache": "node 06_http_cache_headers.js",
+    "07-layered": "node 07_layered_cache.js",
+    "08-advanced-swr": "node 08_advanced_swr_pattern.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "ioredis": "^5.3.2",
+    "lru-cache": "^10.1.0",
+    "node-cache": "^5.1.2"
+  }
+}
