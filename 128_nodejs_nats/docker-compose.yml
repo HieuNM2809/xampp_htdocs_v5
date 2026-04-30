@@ -1,0 +1,95 @@
+# version: "3.8"
+
+services:
+  # ─────────────────────────────────────────────
+  # NATS Server (standalone + JetStream enabled)
+  # ─────────────────────────────────────────────
+  nats:
+    image: nats:2.10-alpine
+    container_name: nats-server
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+      - "6222:6222"   # Cluster route
+    command: >
+      -js
+      -m 8222
+      --name nats-server
+    restart: unless-stopped
+    networks:
+      - nats-net
+
+  # ─────────────────────────────────────────────
+  # NATS Surveyor – real-time monitoring UI
+  # ─────────────────────────────────────────────
+  nats-surveyor:
+    image: natsio/nats-surveyor:latest
+    container_name: nats-surveyor
+    depends_on:
+      - nats
+    ports:
+      - "7777:7777"
+    command: >
+      -s nats://nats:4222
+      --count 1
+    networks:
+      - nats-net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # NATS Cluster Node 1  (for clustering examples)
+  # ─────────────────────────────────────────────
+  nats-cluster-1:
+    image: nats:2.10-alpine
+    container_name: nats-cluster-1
+    ports:
+      - "4223:4222"
+      - "8223:8222"
+    command: >
+      -js
+      -m 8222
+      --name nats-cluster-1
+      --cluster nats://0.0.0.0:6222
+      --routes nats://nats-cluster-2:6222,nats://nats-cluster-3:6222
+    networks:
+      - nats-net
+    restart: unless-stopped
+    profiles: ["cluster"]
+
+  nats-cluster-2:
+    image: nats:2.10-alpine
+    container_name: nats-cluster-2
+    ports:
+      - "4224:4222"
+      - "8224:8222"
+    command: >
+      -js
+      -m 8222
+      --name nats-cluster-2
+      --cluster nats://0.0.0.0:6222
+      --routes nats://nats-cluster-1:6222,nats://nats-cluster-3:6222
+    networks:
+      - nats-net
+    restart: unless-stopped
+    profiles: ["cluster"]
+
+  nats-cluster-3:
+    image: nats:2.10-alpine
+    container_name: nats-cluster-3
+    ports:
+      - "4225:4222"
+      - "8225:8222"
+    command: >
+      -js
+      -m 8222
+      --name nats-cluster-3
+      --cluster nats://0.0.0.0:6222
+      --routes nats://nats-cluster-1:6222,nats://nats-cluster-2:6222
+    networks:
+      - nats-net
+    restart: unless-stopped
+    profiles: ["cluster"]
+
+networks:
+  nats-net:
+    driver: bridge

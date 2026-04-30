@@ -1,0 +1,26 @@
+{
+  "name": "128-nodejs-nats",
+  "version": "1.0.0",
+  "description": "NATS examples from basic to advanced with Node.js",
+  "type": "module",
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:cluster": "docker compose --profile cluster up -d",
+    "01:pub": "node src/01_basic/publisher.js",
+    "01:sub": "node src/01_basic/subscriber.js",
+    "02:reqrep": "node src/02_request_reply/server.js",
+    "02:client": "node src/02_request_reply/client.js",
+    "03:queue": "node src/03_queue_groups/worker.js",
+    "03:sender": "node src/03_queue_groups/sender.js",
+    "04:jetstream:pub": "node src/04_jetstream/publisher.js",
+    "04:jetstream:sub": "node src/04_jetstream/subscriber.js",
+    "05:kv": "node src/05_key_value/kv_store.js",
+    "06:obj": "node src/06_object_store/obj_store.js",
+    "07:microservice": "node src/07_microservices/service.js",
+    "08:headers": "node src/08_headers_auth/headers_demo.js"
+  },
+  "dependencies": {
+    "nats": "^2.28.2"
+  }
+}
