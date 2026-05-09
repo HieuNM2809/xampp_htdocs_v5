@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet Nâng Cao - MarkerCluster & MiniMap</title>
+
+  <!-- Leaflet Core -->
+  <link rel="stylesheet" href="libs/leaflet/leaflet.css" />
+  
+  <!-- MarkerCluster Plugin -->
+  <link rel="stylesheet" href="libs/markercluster/MarkerCluster.css" />
+  <link rel="stylesheet" href="libs/markercluster/MarkerCluster.Default.css" />
+  
+  <!-- MiniMap Plugin -->
+  <link rel="stylesheet" href="libs/minimap/Control.MiniMap.min.css" />
+  
+  <!-- Geocoder Plugin -->
+  <link rel="stylesheet" href="libs/geocoder/Control.Geocoder.css" />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-glass: rgba(255, 255, 255, 0.85);
+      --text-dark: #1e293b;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Floating Panel */
+    .floating-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 320px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 24px;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: transform 0.3s ease;
+    }
+
+    .floating-panel h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-dark);
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .panel-section {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+
+    .panel-section h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-dark);
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* Customizing Leaflet Controls to match theme */
+    .leaflet-control-geocoder {
+      border-radius: 12px !important;
+      overflow: hidden;
+      box-shadow: var(--shadow) !important;
+      border: none !important;
+    }
+    
+    .leaflet-control-geocoder-form input {
+      font-family: 'Outfit', sans-serif !important;
+    }
+
+    .leaflet-control-minimap {
+      border-radius: 12px !important;
+      box-shadow: var(--shadow) !important;
+      border: 3px solid white !important;
+      overflow: hidden;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-dark);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 2000;
+      transition: bottom 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .toast.show {
+      bottom: 30px;
+    }
+    
+    .instruction {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.5;
+        margin-top: 10px;
+        padding: 10px;
+        background: rgba(241, 245, 249, 0.7);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Floating UI Panel -->
+  <div class="floating-panel">
+    <div>
+      <h1>🌍 Map Nâng Cao</h1>
+      <p style="color: #64748b; font-size: 14px;">MarkerCluster, Geocoder & MiniMap</p>
+    </div>
+
+    <div class="panel-section">
+      <h3>Dữ Liệu</h3>
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="markerCount">0</div>
+          <div class="stat-label">Markers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="clusterCount">0</div>
+          <div class="stat-label">Clusters</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="margin-top: 16px;" onclick="generateMarkers()">
+        🔄 Tạo Lại Markers
+      </button>
+    </div>
+
+    <div class="panel-section">
+      <h3>Điều Khiển</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn" onclick="locateUser()">
+          📍 Vị trí của tôi
+        </button>
+        <button class="btn btn-secondary" onclick="flyToCapital()">
+          🏛️ Bay đến Thủ Đô
+        </button>
+        <button class="btn btn-secondary" onclick="clearCustomMarkers()">
+          🗑️ Xóa markers đã vẽ
+        </button>
+      </div>
+    </div>
+    
+    <div class="instruction">
+        <strong>💡 Mẹo:</strong><br/>
+        - Click chuột phải (hoặc giữ lâu trên Mobile) vào bản đồ để thả ghim mới.<br/>
+        - Sử dụng ô tìm kiếm góc phải trên để tìm địa điểm.
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Toast Container -->
+  <div id="toast" class="toast">🔔 Thông báo!</div>
+
+  <!-- Scripts -->
+  <script src="libs/leaflet/leaflet.js"></script>
+  <script src="libs/markercluster/leaflet.markercluster.js"></script>
+  <script src="libs/minimap/Control.MiniMap.min.js"></script>
+  <script src="libs/geocoder/Control.Geocoder.js"></script>
+
+  <script>
+    // --- 1. Khởi tạo bản đồ ---
+    const map = L.map('map', {
+      center: [16.047, 108.206], // Miền Trung VN
+      zoom: 6,
+      zoomControl: false // Tắt mặc định để di chuyển xuống dưới
+    });
+
+    // Di chuyển Zoom Control xuống dưới bên phải
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // --- 2. Định nghĩa Base Layers ---
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    });
+
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '© Esri'
+    });
+    
+    const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© CartoDB'
+    });
+
+    // Đặt layer mặc định
+    osmLayer.addTo(map);
+
+    // Thêm Layer Control
+    L.control.layers({
+      "🗺️ Bản đồ chuẩn": osmLayer,
+      "🛰️ Vệ tinh": satelliteLayer,
+      "🌙 Giao diện tối": darkLayer
+    }).addTo(map);
+
+    // --- 3. Thêm MiniMap ---
+    const miniOsmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+    const miniMap = new L.Control.MiniMap(miniOsmLayer, {
+      toggleDisplay: true,
+      minimized: false,
+      position: 'bottomleft',
+      width: 150,
+      height: 150
+    }).addTo(map);
+
+    // --- 4. Thêm Search (Geocoder) ---
+    L.Control.geocoder({
+      defaultMarkGeocode: true,
+      position: 'topright'
+    }).addTo(map);
+
+    // --- 5. Tích hợp MarkerCluster ---
+    let markers = L.markerClusterGroup({
+      chunkedLoading: true, // Tải mượt khi có nhiều marker
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true
+    });
+    
+    // Group chứa các marker do người dùng click
+    const customMarkersGroup = L.layerGroup().addTo(map);
+
+    // Hàm tạo ngẫu nhiên 1500 markers xung quanh Việt Nam
+    function generateMarkers() {
+      // Xóa markers cũ nếu có
+      markers.clearLayers();
+      
+      const numMarkers = 1500;
+      const bounds = {
+        north: 23.3, south: 8.5,
+        east: 109.5, west: 102.1
+      };
+
+      const points = [];
+      for (let i = 0; i < numMarkers; i++) {
+        const lat = Math.random() * (bounds.north - bounds.south) + bounds.south;
+        const lng = Math.random() * (bounds.east - bounds.west) + bounds.west;
+        const title = `Điểm ngẫu nhiên #${i + 1}`;
+        
+        const marker = L.marker([lat, lng], { title: title });
+        marker.bindPopup(`
+          <div style="font-family:'Outfit'; text-align:center;">
+            <div style="font-size:24px; margin-bottom:5px;">📍</div>
+            <h4 style="margin:0; color:#1e293b;">${title}</h4>
+            <p style="margin:5px 0; color:#64748b; font-size:12px;">Tọa độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+          </div>
+        `);
+        points.push(marker);
+      }
+
+      markers.addLayers(points);
+      map.addLayer(markers);
+
+      // Cập nhật UI
+      document.getElementById('markerCount').innerText = numMarkers;
+      updateClusterCount();
+      
+      showToast(`Đã tạo ${numMarkers} điểm ngẫu nhiên!`);
+    }
+
+    // Lắng nghe sự kiện để đếm số cluster hiển thị trên màn hình
+    map.on('moveend zoomend', updateClusterCount);
+
+    function updateClusterCount() {
+        // MarkerCluster không có API trực tiếp đếm số cluster đang hiển thị dễ dàng
+        // nên ta đếm số element HTML có class 'marker-cluster'
+        const clusterEls = document.querySelectorAll('.marker-cluster');
+        document.getElementById('clusterCount').innerText = clusterEls.length > 0 ? clusterEls.length + '+' : '0';
+    }
+
+    // Chạy lần đầu
+    generateMarkers();
+
+    // --- 6. Các hàm điều khiển ---
+    
+    // Tìm vị trí người dùng
+    function locateUser() {
+      map.locate({setView: true, maxZoom: 16});
+      showToast("Đang tìm vị trí của bạn...");
+    }
+
+    map.on('locationfound', function(e) {
+      const radius = e.accuracy / 2;
+      
+      const userIcon = L.divIcon({
+        className: '',
+        html: `<div style="width:20px;height:20px;background:#3b82f6;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(59,130,246,0.8);animation: pulse 2s infinite;"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+
+      L.marker(e.latlng, {icon: userIcon})
+        .addTo(customMarkersGroup)
+        .bindPopup("Bạn đang ở trong bán kính " + radius + " mét quanh điểm này.").openPopup();
+
+      L.circle(e.latlng, radius, {
+          color: '#3b82f6',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.15
+      }).addTo(customMarkersGroup);
+      
+      showToast("Đã tìm thấy vị trí!");
+    });
+
+    map.on('locationerror', function(e) {
+        showToast("Không thể lấy vị trí: " + e.message);
+    });
+
+    // Bay đến Hà Nội
+    function flyToCapital() {
+      map.flyTo([21.0285, 105.8542], 13, {
+        duration: 2,
+        easeLinearity: 0.25
+      });
+    }
+
+    // --- 7. Tương tác chuột phải (Context Menu giả lập) ---
+    map.on('contextmenu', function(e) {
+        const customIcon = L.divIcon({
+            className: '',
+            html: `<div style="font-size:24px; filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.3));">📌</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 24],
+            popupAnchor: [0, -24]
+        });
+
+        const newMarker = L.marker(e.latlng, { icon: customIcon }).addTo(customMarkersGroup);
+        newMarker.bindPopup(`
+            <div style="font-family:'Outfit'">
+                <h4 style="margin:0 0 5px 0;">Điểm Đánh Dấu Mới</h4>
+                <p style="margin:0; font-size:12px; color:#666;">
+                    ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}
+                </p>
+                <button class="btn" style="margin-top:10px; padding:6px; font-size:12px;" onclick="map.removeLayer(this.closest('.leaflet-popup')._source)">Xóa điểm này</button>
+            </div>
+        `).openPopup();
+        
+        showToast("Đã thả ghim mới!");
+    });
+    
+    function clearCustomMarkers() {
+        customMarkersGroup.clearLayers();
+        showToast("Đã xóa các điểm bạn tự vẽ!");
+    }
+
+    // --- 8. Tiện ích ---
+    let toastTimeout;
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerHTML = message;
+        toast.classList.add('show');
+        
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+    
+    // Thêm animation CSS cho User Icon
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+    `;
+    document.head.appendChild(style);
+
+  </script>
+</body>
+</html>

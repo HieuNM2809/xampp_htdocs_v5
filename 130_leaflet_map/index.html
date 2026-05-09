@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8, #e879f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 30px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .icon-box {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            flex: 1;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            color: #38bdf8;
+            font-weight: 600;
+            font-size: 14px;
+            gap: 8px;
+        }
+
+        .card-footer svg {
+            width: 16px; height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover .card-footer svg {
+            transform: translateX(4px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 36px; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Ví dụ Leaflet Map 🗺️</h1>
+        <p>Tuyển tập các ví dụ từ cơ bản đến nâng cao về lập trình bản đồ tương tác trực quan sử dụng thư viện Leaflet mã nguồn mở.</p>
+    </div>
+
+    <div class="grid">
+        <!-- Bài 1 -->
+        <a href="1_basic_vietnam_cities.html" class="card">
+            <div class="icon-box">🇻🇳</div>
+            <h3>1. Bản Đồ Cơ Bản</h3>
+            <p>Khởi tạo bản đồ Việt Nam với 8 thành phố lớn. Học cách thêm Marker tùy chỉnh, Popup thông tin, Layer Control và vẽ đường thẳng (Polyline).</p>
+            <div class="tags">
+                <span class="tag">Tile Layers</span>
+                <span class="tag">Markers</span>
+                <span class="tag">Popup</span>
+            </div>
+            <div class="card-footer">
+                Mở ví dụ
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </div>
+        </a>
+
+        <!-- Bài 2 -->
+        <a href="2_advanced_plugins_map.html" class="card">
+            <div class="icon-box">🧩</div>
+            <h3>2. Plugins Nâng Cao</h3>
+            <p>Tích hợp các công cụ mạnh mẽ: Quản lý hàng ngàn điểm với MarkerCluster, bản đồ thu nhỏ MiniMap và chức năng click chuột phải để thả ghim mới.</p>
+            <div class="tags">
+                <span class="tag">MarkerCluster</span>
+                <span class="tag">MiniMap</span>
+                <span class="tag">Events</span>
+            </div>
+            <div class="card-footer">
+                Mở ví dụ
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </div>
+        </a>
+
+        <!-- Bài 3 -->
+        <a href="3_live_gps_tracking.html" class="card">
+            <div class="icon-box">📡</div>
+            <h3>3. Live GPS Tracking</h3>
+            <p>Định vị thiết bị thời gian thực. Cập nhật vị trí liên tục khi di chuyển, hiển thị vòng tròn sai số đo lường với hiệu ứng sóng radar đẹp mắt.</p>
+            <div class="tags">
+                <span class="tag">Geolocation API</span>
+                <span class="tag">Watch Position</span>
+                <span class="tag">CSS Animation</span>
+            </div>
+            <div class="card-footer">
+                Mở ví dụ
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </div>
+        </a>
+
+        <!-- Bài 4 -->
+        <a href="4_address_to_coordinates.html" class="card">
+            <div class="icon-box">🔍</div>
+            <h3>4. Geocoding API</h3>
+            <p>Sử dụng API Nominatim để chuyển đổi địa chỉ thành tọa độ Lat/Lng và ngược lại (quét lấy địa chỉ tại một điểm click bất kỳ trên bản đồ).</p>
+            <div class="tags">
+                <span class="tag">Fetch API</span>
+                <span class="tag">Geocoding</span>
+                <span class="tag">Nominatim</span>
+            </div>
+            <div class="card-footer">
+                Mở ví dụ
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </div>
+        </a>
+    </div>
+
+    <div style="margin-top: 50px; text-align: center; color: #94a3b8; font-size: 15px;">
+        Phát triển bởi <strong style="color: #818cf8;">HieuNM</strong>
+    </div>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet - Theo Dõi Vị Trí Trực Tiếp</title>
+  <link rel="stylesheet" href="libs/leaflet/leaflet.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 16px 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .title-area h1 {
+      font-size: 20px;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-badge.active .dot {
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+
+    #map {
+      flex: 1;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .info-card {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      text-align: left;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 12px;
+    }
+
+    .info-item span {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .info-item strong {
+      font-size: 15px;
+      color: #0f172a;
+    }
+
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #2563eb;
+    }
+
+    .btn.stop {
+      background: #ef4444;
+    }
+
+    .btn.stop:hover {
+      background: #dc2626;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    /* Hiệu ứng của điểm đánh dấu người dùng */
+    .custom-user-marker {
+      width: 16px;
+      height: 16px;
+      background: #3b82f6;
+      border: 3px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="title-area">
+      <h1>📡 GPS Live Tracking</h1>
+    </div>
+    <div class="status-badge" id="statusBadge">
+      <div class="dot"></div>
+      <span id="statusText">Chưa bật GPS</span>
+    </div>
+  </header>
+
+  <div id="map"></div>
+
+  <div class="info-card">
+    <div class="info-grid">
+      <div class="info-item">
+        <span>Vĩ độ (Lat)</span>
+        <strong id="valLat">--</strong>
+      </div>
+      <div class="info-item">
+        <span>Kinh độ (Lng)</span>
+        <strong id="valLng">--</strong>
+      </div>
+      <div class="info-item">
+        <span>Sai số (Độ chính xác)</span>
+        <strong id="valAcc">-- m</strong>
+      </div>
+      <div class="info-item">
+        <span>Cập nhật gần nhất</span>
+        <strong id="valTime">--:--:--</strong>
+      </div>
+    </div>
+    <button class="btn" id="toggleBtn" onclick="toggleTracking()">Bật theo dõi vị trí</button>
+  </div>
+
+  <script src="libs/leaflet/leaflet.js"></script>
+  <script>
+    // 1. Khởi tạo bản đồ, ban đầu focus vào Đông Nam Á
+    const map = L.map('map', {
+      center: [16.0, 106.0],
+      zoom: 5,
+      zoomControl: false // Sẽ đặt lại vị trí ở dưới
+    });
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19
+    }).addTo(map);
+
+    // 2. Biến trạng thái
+    let isTracking = false;
+    let userMarker = null;
+    let userCircle = null;
+    let firstLocationFound = false;
+
+    // Custom Icon cho vị trí người dùng
+    const userIcon = L.divIcon({
+      className: 'custom-user-marker',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8] // Tâm của icon
+    });
+
+    // 3. Hàm Bật / Tắt Theo dõi
+    function toggleTracking() {
+      const btn = document.getElementById('toggleBtn');
+      const badge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+
+      if (!isTracking) {
+        // YÊU CẦU THEO DÕI VỊ TRÍ
+        map.locate({
+          setView: !firstLocationFound, // Nếu là lần đầu, tự động bay tới đó
+          maxZoom: 16,
+          watch: true,   // Bật chế độ THEO DÕI LIÊN TỤC (Watch)
+          enableHighAccuracy: true // Xin quyền GPS độ chính xác cao (nếu có)
+        });
+
+        btn.textContent = "Dừng theo dõi";
+        btn.classList.add("stop");
+
+        badge.classList.add("active");
+        statusText.textContent = "Đang tìm tín hiệu GPS...";
+        isTracking = true;
+      } else {
+        // DỪNG THEO DÕI
+        map.stopLocate();
+
+        btn.textContent = "Bật theo dõi vị trí";
+        btn.classList.remove("stop");
+
+        badge.classList.remove("active");
+        statusText.textContent = "Đã dừng theo dõi";
+        isTracking = false;
+
+        // Xóa điểm đánh dấu cũ đi cho sạch (tùy chọn)
+        if (userMarker) {
+          map.removeLayer(userMarker);
+          map.removeLayer(userCircle);
+          userMarker = null;
+          userCircle = null;
+        }
+        document.getElementById('valLat').textContent = '--';
+        document.getElementById('valLng').textContent = '--';
+        document.getElementById('valAcc').textContent = '-- m';
+      }
+    }
+
+    // 4. Lắng nghe khi BẢN ĐỒ TÌM THẤY VỊ TRÍ (Hàm này sẽ chạy nhiều lần do watch: true)
+    map.on('locationfound', function (e) {
+      const radius = e.accuracy;
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+
+      // Cập nhật số liệu trên giao diện Card
+      document.getElementById('valLat').textContent = lat.toFixed(5) + '°';
+      document.getElementById('valLng').textContent = lng.toFixed(5) + '°';
+      document.getElementById('valAcc').textContent = '± ' + radius.toFixed(1) + ' m';
+      document.getElementById('valTime').textContent = new Date().toLocaleTimeString('vi-VN');
+
+      document.getElementById('statusText').textContent = "Đang theo dõi trực tiếp";
+
+      // Nếu đã có marker rồi thì chỉ cần cập nhật lại tọa độ
+      if (userMarker) {
+        userMarker.setLatLng(e.latlng);
+        userCircle.setLatLng(e.latlng);
+        userCircle.setRadius(radius);
+      } else {
+        // Chưa có thì tạo mới
+        userMarker = L.marker(e.latlng, { icon: userIcon }).addTo(map);
+        userCircle = L.circle(e.latlng, radius, {
+          color: '#3b82f6',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.15,
+          weight: 1
+        }).addTo(map);
+      }
+
+      // Tự động giữ màn hình ở giữa người dùng (Bạn có thể bật nếu muốn camera khóa vào người dùng)
+      // map.panTo(e.latlng);
+
+      firstLocationFound = true;
+    });
+
+    // 5. Xử lý khi bị lỗi (từ chối quyền vị trí, lỗi mạng...)
+    map.on('locationerror', function (e) {
+      alert("Không thể lấy vị trí: " + e.message + "\n\n1. Hãy đảm bảo bạn đã cấp quyền Vị Trí (Location) cho trình duyệt.\n2. URL phải là HTTPS hoặc Localhost để dùng GPS.");
+      // Tắt nút
+      if (isTracking) toggleTracking();
+    });
+  </script>
+</body>
+
+</html>
