@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet - Tìm Đường Đi (Routing)</title>
+  <link rel="stylesheet" href="libs/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="libs/routing/leaflet-routing-machine.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Roboto', sans-serif; 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column;
+      color: #334155;
+    }
+
+    .header {
+      background: #1e293b;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .header h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+    
+    .toolbar {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: #2563eb; }
+    .btn-danger { background: #ef4444; }
+    .btn-danger:hover { background: #dc2626; }
+
+    #map { flex: 1; width: 100%; }
+
+    /* Customizing the Routing Box */
+    .leaflet-routing-container {
+      background-color: rgba(255, 255, 255, 0.95) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+      font-family: 'Roboto', sans-serif !important;
+      padding-top: 10px;
+    }
+    
+    .instruction-panel {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px 24px;
+        border-radius: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        z-index: 1000;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none; /* Let clicks pass through */
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h2>🛣️ Tìm Đường Đi (Routing Machine)</h2>
+    <div class="toolbar">
+      <button class="btn" id="calcRouteBtn" onclick="calculateUserRoute()" style="background: #10b981; display: none;">Tính Đường Đi</button>
+      <button class="btn" onclick="addHanoiHCM()">Tuyến HN - HCM</button>
+      <button class="btn btn-danger" onclick="clearRoute()">Xóa Tuyến Đường</button>
+    </div>
+  </header>
+
+  <div class="instruction-panel">
+    🖱️ Click 2 điểm trên bản đồ, sau đó bấm "Tính Đường Đi"
+  </div>
+
+  <div id="map"></div>
+
+  <script src="libs/leaflet/leaflet.js"></script>
+  <script src="libs/routing/leaflet-routing-machine.js"></script>
+  <script>
+    // 1. Khởi tạo bản đồ
+    const map = L.map('map').setView([16.047, 108.206], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // 2. Khởi tạo Routing Control (chưa có điểm nào)
+    let control = L.Routing.control({
+        waypoints: [],
+        routeWhileDragging: true,
+        showAlternatives: true,
+        fitSelectedRoutes: true,
+        lineOptions: {
+            styles: [{color: '#3b82f6', opacity: 0.8, weight: 6}]
+        },
+        createMarker: function(i, wp, nWps) {
+            // Tùy chỉnh icon cho điểm bắt đầu (xanh) và kết thúc (đỏ)
+            const iconUrl = i === 0 
+                ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' 
+                : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+            
+            return L.marker(wp.latLng, {
+                draggable: true,
+                icon: L.icon({
+                    iconUrl: iconUrl,
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).bindPopup(i === 0 ? "<b>Điểm xuất phát</b><br>Kéo để di chuyển" : "<b>Điểm đến</b><br>Kéo để di chuyển");
+        }
+    }).addTo(map);
+
+    // 3. Xử lý sự kiện click trên bản đồ để lưu điểm nháp
+    let tempMarkers = [];
+
+    map.on('click', function(e) {
+        // Nếu đang hiện lộ trình hoặc đã chọn 2 điểm nháp, xóa để làm lại
+        if (control.getWaypoints().filter(wp => wp.latLng !== null).length > 0 || tempMarkers.length >= 2) {
+            clearRoute();
+        }
+        
+        // Đặt marker tạm thời
+        const isStart = tempMarkers.length === 0;
+        const iconUrl = isStart
+            ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' 
+            : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+
+        const marker = L.marker(e.latlng, {
+            icon: L.icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41]
+            })
+        }).bindPopup(isStart ? "Điểm xuất phát" : "Điểm đến").addTo(map);
+
+        tempMarkers.push(marker);
+
+        // Hiện nút tính đường nếu đủ 2 điểm
+        if (tempMarkers.length === 2) {
+            document.getElementById('calcRouteBtn').style.display = 'inline-block';
+        }
+    });
+
+    // 4. Các hàm tiện ích
+    function calculateUserRoute() {
+        if (tempMarkers.length < 2) return;
+        
+        const wp1 = tempMarkers[0].getLatLng();
+        const wp2 = tempMarkers[1].getLatLng();
+        
+        // Xóa các marker nháp (vì Routing Machine sẽ tự vẽ marker của nó)
+        tempMarkers.forEach(m => map.removeLayer(m));
+        tempMarkers = [];
+        
+        // Bắt đầu tính toán lộ trình
+        control.setWaypoints([wp1, wp2]);
+        document.getElementById('calcRouteBtn').style.display = 'none';
+    }
+
+    function addHanoiHCM() {
+        clearRoute();
+        control.setWaypoints([
+            L.latLng(21.0285, 105.8542), // Hà Nội
+            L.latLng(10.8231, 106.6297)  // TP.HCM
+        ]);
+    }
+
+    function clearRoute() {
+        control.setWaypoints([]);
+        tempMarkers.forEach(m => map.removeLayer(m));
+        tempMarkers = [];
+        document.getElementById('calcRouteBtn').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
