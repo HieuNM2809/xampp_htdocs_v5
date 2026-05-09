@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflet Map - Bản Đồ Việt Nam</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-bottom: 1px solid #334155;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1000;
+    }
+
+    header .logo {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    header h1 { font-size: 20px; font-weight: 700; color: #f1f5f9; }
+    header p  { font-size: 13px; color: #94a3b8; }
+
+    .toolbar {
+      display: flex; gap: 8px; margin-left: auto;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all .2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: .85; transform: translateY(-1px); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+    }
+    .btn-outline:hover { background: #1e293b; }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-section { padding: 16px; border-bottom: 1px solid #334155; }
+    .sidebar-section h3 { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+
+    .city-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .city-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s;
+      border: 1px solid transparent;
+    }
+    .city-item:hover { background: #0f172a; border-color: #334155; }
+    .city-item.active { background: #1d3461; border-color: #3b82f6; }
+
+    .city-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .city-info { flex: 1; }
+    .city-name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+    .city-desc { font-size: 12px; color: #64748b; }
+
+    /* Layer controls */
+    .layer-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0;
+    }
+
+    .layer-item label { font-size: 13px; color: #cbd5e1; cursor: pointer; }
+
+    input[type="radio"] { accent-color: #3b82f6; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .stat-card {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #334155;
+    }
+    .stat-value { font-size: 20px; font-weight: 700; color: #3b82f6; }
+    .stat-label { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    /* Map */
+    #map { flex: 1; }
+
+    /* Custom popup */
+    .leaflet-popup-content-wrapper {
+      background: #1e293b !important;
+      border: 1px solid #334155 !important;
+      border-radius: 12px !important;
+      box-shadow: 0 20px 40px rgba(0,0,0,.5) !important;
+      color: #e2e8f0 !important;
+    }
+
+    .leaflet-popup-tip { background: #1e293b !important; }
+
+    .popup-content h4 { font-size: 15px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+    .popup-content p  { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+    .popup-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    /* Info box */
+    .info-box {
+      position: absolute;
+      bottom: 24px; right: 24px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px 18px;
+      z-index: 999;
+      font-size: 12px;
+      color: #94a3b8;
+      max-width: 220px;
+    }
+    .info-box strong { color: #e2e8f0; display: block; margin-bottom: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🗺️</div>
+  <div>
+    <h1>Bản Đồ Việt Nam</h1>
+    <p>Leaflet.js Interactive Map Demo</p>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-outline" onclick="resetView()">🔄 Reset View</button>
+    <button class="btn btn-primary" onclick="toggleClusters()">📍 Toggle Markers</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h3>Thành Phố Lớn</h3>
+      <div class="city-list" id="cityList"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Lớp Bản Đồ</h3>
+      <div class="layer-item">
+        <input type="radio" name="layer" id="layer-street" value="street" checked onchange="changeLayer(this.value)">
+        <label for="layer-street">🗺️ Street Map</label>
+      </div>
+      <div class="layer-item">
+        <input type="radio" name="layer" id="layer-satellite" value="satellite" onchange="changeLayer(this.value)">
+        <label for="layer-satellite">🛰️ Satellite</label>
+      </div>
+      <div class="layer-item">
+        <input type="radio" name="layer" id="layer-topo" value="topo" onchange="changeLayer(this.value)">
+        <label for="layer-topo">🏔️ Topo Map</label>
+      </div>
+      <div class="layer-item">
+        <input type="radio" name="layer" id="layer-dark" value="dark" onchange="changeLayer(this.value)">
+        <label for="layer-dark">🌙 Dark Mode</label>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Thống Kê</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="markerCount">0</div>
+          <div class="stat-label">Điểm đánh dấu</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="zoomLevel">6</div>
+          <div class="stat-label">Mức zoom</div>
+        </div>
+        <div class="stat-card" style="grid-column: 1/-1;">
+          <div class="stat-value" style="font-size:14px;" id="centerCoords">16.047°N, 108.206°E</div>
+          <div class="stat-label">Tọa độ trung tâm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+</div>
+
+<div class="info-box">
+  <strong>💡 Hướng dẫn</strong>
+  Click vào marker để xem thông tin. Cuộn chuột để zoom. Kéo để di chuyển bản đồ.
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // --- Dữ liệu thành phố ---
+  const cities = [
+    { name: "Hà Nội",       lat: 21.0285, lng: 105.8542, color: "#ef4444", category: "Thủ đô",    pop: "8.0M",  desc: "Thủ đô ngàn năm văn hiến" },
+    { name: "TP. Hồ Chí Minh", lat: 10.8231, lng: 106.6297, color: "#f97316", category: "Đô thị", pop: "9.3M",  desc: "Trung tâm kinh tế lớn nhất" },
+    { name: "Đà Nẵng",      lat: 16.0471, lng: 108.2068, color: "#3b82f6", category: "Đô thị",    pop: "1.2M",  desc: "Thành phố đáng sống nhất VN" },
+    { name: "Hải Phòng",    lat: 20.8449, lng: 106.6881, color: "#8b5cf6", category: "Đô thị",    pop: "2.1M",  desc: "Thành phố cảng lớn nhất miền Bắc" },
+    { name: "Cần Thơ",      lat: 10.0452, lng: 105.7469, color: "#10b981", category: "Đô thị",    pop: "1.4M",  desc: "Thủ phủ miền Tây sông nước" },
+    { name: "Huế",          lat: 16.4637, lng: 107.5909, color: "#f59e0b", category: "Di sản",    pop: "0.35M", desc: "Cố đô lịch sử - Di sản UNESCO" },
+    { name: "Nha Trang",    lat: 12.2388, lng: 109.1967, color: "#06b6d4", category: "Du lịch",   pop: "0.45M", desc: "Thành phố biển xinh đẹp" },
+    { name: "Đà Lạt",       lat: 11.9404, lng: 108.4583, color: "#ec4899", category: "Du lịch",   pop: "0.25M", desc: "Thành phố ngàn hoa" },
+  ];
+
+  // --- Tile layers ---
+  const tileLayers = {
+    street:    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',         { attribution: '© OpenStreetMap' }),
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' }),
+    topo:      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',           { attribution: '© OpenTopoMap' }),
+    dark:      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
+  };
+
+  // --- Khởi tạo bản đồ ---
+  const map = L.map('map', {
+    center: [16.047, 108.206],
+    zoom: 6,
+    layers: [tileLayers.street],
+    zoomControl: true,
+  });
+
+  let currentLayer = 'street';
+  let markersVisible = true;
+  const markersGroup = L.layerGroup().addTo(map);
+
+  // --- Tạo custom icon ---
+  function createIcon(color) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:36px; height:36px;
+        background:${color};
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        border:3px solid white;
+        box-shadow:0 4px 12px rgba(0,0,0,.4);
+        transition:transform .2s;
+      "></div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor: [0, -38],
+    });
+  }
+
+  // --- Thêm markers ---
+  const markerRefs = [];
+
+  cities.forEach((city, i) => {
+    const marker = L.marker([city.lat, city.lng], { icon: createIcon(city.color) });
+
+    marker.bindPopup(`
+      <div class="popup-content">
+        <span class="popup-badge" style="background:${city.color}22; color:${city.color};">${city.category}</span>
+        <h4>📍 ${city.name}</h4>
+        <p>${city.desc}</p>
+        <p style="margin-top:8px;">👥 Dân số: <strong style="color:#e2e8f0;">${city.pop}</strong></p>
+        <p>📍 ${city.lat.toFixed(4)}°N, ${city.lng.toFixed(4)}°E</p>
+      </div>
+    `, { maxWidth: 240 });
+
+    marker.addTo(markersGroup);
+    markerRefs.push(marker);
+
+    // Sidebar item
+    const item = document.createElement('div');
+    item.className = 'city-item';
+    item.id = `city-${i}`;
+    item.innerHTML = `
+      <div class="city-dot" style="background:${city.color};"></div>
+      <div class="city-info">
+        <div class="city-name">${city.name}</div>
+        <div class="city-desc">${city.category} · ${city.pop}</div>
+      </div>
+    `;
+    item.addEventListener('click', () => {
+      map.flyTo([city.lat, city.lng], 12, { duration: 1.2 });
+      setTimeout(() => marker.openPopup(), 1300);
+      document.querySelectorAll('.city-item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+    });
+    document.getElementById('cityList').appendChild(item);
+  });
+
+  // --- Thêm polyline nối các thành phố ---
+  const routeCoords = cities.map(c => [c.lat, c.lng]);
+  L.polyline(routeCoords, {
+    color: '#3b82f6',
+    weight: 2,
+    opacity: 0.4,
+    dashArray: '6, 8',
+  }).addTo(map);
+
+  // --- Cập nhật stats ---
+  document.getElementById('markerCount').textContent = cities.length;
+
+  map.on('zoomend moveend', () => {
+    document.getElementById('zoomLevel').textContent = map.getZoom();
+    const c = map.getCenter();
+    document.getElementById('centerCoords').textContent =
+      `${c.lat.toFixed(3)}°N, ${c.lng.toFixed(3)}°E`;
+  });
+
+  // --- Hàm đổi layer ---
+  function changeLayer(name) {
+    map.removeLayer(tileLayers[currentLayer]);
+    tileLayers[name].addTo(map);
+    currentLayer = name;
+  }
+
+  // --- Reset view ---
+  function resetView() {
+    map.flyTo([16.047, 108.206], 6, { duration: 1.5 });
+    document.querySelectorAll('.city-item').forEach(el => el.classList.remove('active'));
+  }
+
+  // --- Toggle markers ---
+  function toggleClusters() {
+    if (markersVisible) {
+      map.removeLayer(markersGroup);
+    } else {
+      markersGroup.addTo(map);
+    }
+    markersVisible = !markersVisible;
+  }
+
+  // --- Scale control ---
+  L.control.scale({ imperial: false }).addTo(map);
+</script>
+</body>
+</html>
