@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>06 - Tìm cửa hàng gần nhất</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #toolbar { padding: 10px 20px; background: #fff3e0; display: flex; gap: 10px; align-items: center; }
+  #map { height: calc(100vh - 110px); }
+  a { color: #fff; }
+  button { padding: 8px 16px; background: #e91e63; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+  button:hover { background: #c2185b; }
+  #result { font-size: 14px; color: #333; }
+  .me-pin { width:20px; height:20px; border-radius:50%; background:#2196f3; border:3px solid #fff; box-shadow:0 0 0 4px rgba(33,150,243,0.3); }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>06 - Tìm cửa hàng gần nhất</b> - Geolocation + Haversine
+</div>
+<div id="toolbar">
+  <button onclick="findMe()">📍 Định vị tôi</button>
+  <button onclick="useDemoLocation()">🎯 Dùng vị trí demo (Q1)</button>
+  <div id="result">Bấm nút để tìm cửa hàng gần nhất.</div>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const stores = [
+    { name: 'Hasaki Nguyễn Huệ',   lat: 10.7732, lng: 106.7038 },
+    { name: 'Hasaki Crescent Mall', lat: 10.7290, lng: 106.7180 },
+    { name: 'Hasaki Aeon Tân Phú',  lat: 10.8014, lng: 106.6173 },
+    { name: 'Hasaki Vincom Đồng Khởi', lat: 10.7780, lng: 106.7028 },
+    { name: 'Hasaki Gò Vấp',        lat: 10.8409, lng: 106.6655 },
+    { name: 'Hasaki Thủ Đức',       lat: 10.8505, lng: 106.7717 },
+    { name: 'Hasaki Bình Thạnh',    lat: 10.8030, lng: 106.7100 },
+    { name: 'Hasaki Q10',           lat: 10.7720, lng: 106.6670 }
+  ];
+
+  const map = L.map('map').setView([10.78, 106.70], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Vẽ marker cho tất cả cửa hàng
+  const storeMarkers = stores.map(s =>
+    L.marker([s.lat, s.lng]).addTo(map).bindPopup(s.name)
+  );
+
+  let meMarker = null, lineToStore = null;
+
+  // === Công thức Haversine - tính khoảng cách 2 toạ độ trên trái đất (km) ===
+  // Đây là kiến thức then chốt khi làm store locator!
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371;  // bán kính trái đất (km)
+    const toRad = deg => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLng/2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function findNearest(myLat, myLng) {
+    // Map mỗi store thêm field distance, sort tăng dần, lấy phần tử đầu
+    const sorted = stores
+      .map(s => ({ ...s, dist: haversine(myLat, myLng, s.lat, s.lng) }))
+      .sort((a, b) => a.dist - b.dist);
+
+    const nearest = sorted[0];
+
+    // Xoá marker "tôi" và đường kẻ cũ nếu có
+    if (meMarker) map.removeLayer(meMarker);
+    if (lineToStore) map.removeLayer(lineToStore);
+
+    // Vẽ vị trí "tôi" - dùng DivIcon hình tròn xanh có hiệu ứng ring
+    const meIcon = L.divIcon({ className: '', html: '<div class="me-pin"></div>', iconSize: [20,20], iconAnchor: [10,10] });
+    meMarker = L.marker([myLat, myLng], { icon: meIcon }).addTo(map).bindPopup('Vị trí của bạn');
+
+    // Vẽ đường kẻ thẳng từ "tôi" đến cửa hàng gần nhất
+    lineToStore = L.polyline([[myLat, myLng], [nearest.lat, nearest.lng]], {
+      color: '#e91e63', weight: 3, dashArray: '8 6'
+    }).addTo(map);
+
+    // Zoom vừa khít cả 2 điểm
+    map.fitBounds(lineToStore.getBounds().pad(0.3));
+
+    // Hiển thị kết quả + top 3
+    document.getElementById('result').innerHTML = `
+      <b>Gần nhất:</b> ${nearest.name} (${nearest.dist.toFixed(2)} km)
+      &nbsp;|&nbsp;
+      <b>Top 3:</b> ${sorted.slice(0,3).map(s => `${s.name} (${s.dist.toFixed(1)}km)`).join(', ')}
+    `;
+  }
+
+  // Geolocation API của trình duyệt - yêu cầu HTTPS hoặc localhost
+  function findMe() {
+    if (!navigator.geolocation) {
+      alert('Trình duyệt không hỗ trợ Geolocation');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => findNearest(pos.coords.latitude, pos.coords.longitude),
+      err => alert('Không lấy được vị trí: ' + err.message)
+    );
+  }
+
+  // Demo: dùng vị trí cố định (Bến Thành)
+  function useDemoLocation() {
+    findNearest(10.7720, 106.6980);
+  }
+</script>
+</body>
+</html>

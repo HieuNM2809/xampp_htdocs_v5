@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>09 - Tìm kiếm địa chỉ (Geocoding)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #toolbar {
+    padding: 10px 20px; background: #fff3e0;
+    display: flex; gap: 10px; align-items: center;
+    position: relative;
+  }
+  #map { height: calc(100vh - 110px); }
+  a { color: #fff; }
+  #search {
+    flex: 1; max-width: 500px;
+    padding: 8px 12px; font-size: 14px;
+    border: 1px solid #ccc; border-radius: 4px;
+  }
+  button { padding: 8px 16px; background: #e91e63; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+  #results {
+    position: absolute;
+    top: 100%; left: 20px; right: 20px;
+    max-width: 500px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+  }
+  .result-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; }
+  .result-item:hover { background: #fce4ec; }
+  .result-item small { color: #888; display: block; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>09 - Tìm kiếm địa chỉ</b> - Geocoding qua Nominatim (free OSM)
+</div>
+<div id="toolbar">
+  <input id="search" placeholder="Nhập địa chỉ... vd: 'Bến Thành, TP.HCM'" />
+  <button onclick="doSearch()">🔍 Tìm</button>
+  <small style="color:#666;">Click bản đồ để reverse geocoding</small>
+  <div id="results"></div>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([10.78, 106.70], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  let searchMarker = null;
+  const input = document.getElementById('search');
+  const resultsDiv = document.getElementById('results');
+
+  // === FORWARD GEOCODING: địa chỉ → toạ độ ===
+  // Nominatim: dịch vụ free của OSM, KHÔNG dùng cho ứng dụng heavy
+  // Production: tự host hoặc dùng Mapbox/Google/HERE
+  async function geocode(query) {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=vn&limit=5`;
+    const res = await fetch(url, {
+      headers: { 'Accept-Language': 'vi' }  // ưu tiên tên tiếng Việt
+    });
+    return res.json();
+  }
+
+  async function doSearch() {
+    const q = input.value.trim();
+    if (!q) return;
+    resultsDiv.innerHTML = '⏳ Đang tìm...';
+    resultsDiv.style.display = 'block';
+
+    try {
+      const results = await geocode(q);
+      if (!results.length) {
+        resultsDiv.innerHTML = '<div class="result-item">Không tìm thấy kết quả</div>';
+        return;
+      }
+      resultsDiv.innerHTML = '';
+      results.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = `<b>${r.display_name.split(',')[0]}</b><small>${r.display_name}</small>`;
+        item.onclick = () => selectResult(r);
+        resultsDiv.appendChild(item);
+      });
+    } catch (e) {
+      resultsDiv.innerHTML = '<div class="result-item">Lỗi: ' + e.message + '</div>';
+    }
+  }
+
+  function selectResult(r) {
+    const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+    if (searchMarker) map.removeLayer(searchMarker);
+    searchMarker = L.marker([lat, lng]).addTo(map).bindPopup(r.display_name).openPopup();
+    map.setView([lat, lng], 16);
+    resultsDiv.style.display = 'none';
+    input.value = r.display_name.split(',')[0];
+  }
+
+  // Enter để search
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  // Auto-hide kết quả khi click ngoài
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#toolbar')) resultsDiv.style.display = 'none';
+  });
+
+  // === REVERSE GEOCODING: toạ độ → địa chỉ ===
+  // Click bất kỳ điểm nào trên map để xem địa chỉ
+  map.on('click', async e => {
+    const { lat, lng } = e.latlng;
+    if (searchMarker) map.removeLayer(searchMarker);
+    searchMarker = L.marker([lat, lng]).addTo(map).bindPopup('⏳ Đang tra cứu...').openPopup();
+
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'vi' } });
+    const data = await res.json();
+    searchMarker.setPopupContent(`<b>${data.display_name || 'Không xác định'}</b><br><small>${lat.toFixed(5)}, ${lng.toFixed(5)}</small>`);
+  });
+
+  // ⚠️ Nominatim Usage Policy: tối đa 1 req/giây, phải có User-Agent rõ ràng
+  // Khi deploy thật, nên debounce input + cache kết quả
+</script>
+</body>
+</html>

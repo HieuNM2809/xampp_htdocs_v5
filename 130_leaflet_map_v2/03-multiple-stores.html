@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>03 - Nhiều cửa hàng từ data</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; display: flex; flex-direction: column; height: 100vh; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #content { display: flex; flex: 1; overflow: hidden; }
+  #sidebar { width: 300px; overflow-y: auto; background: #fafafa; border-right: 1px solid #ddd; }
+  #map { flex: 1; }
+  a { color: #fff; }
+  .store { padding: 12px 16px; border-bottom: 1px solid #eee; cursor: pointer; }
+  .store:hover { background: #fce4ec; }
+  .store h4 { margin: 0 0 4px 0; color: #e91e63; }
+  .store p { margin: 2px 0; font-size: 13px; color: #555; }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>03 - Nhiều cửa hàng</b> - Load data → marker + sidebar list
+</div>
+<div id="content">
+  <div id="sidebar"></div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Dữ liệu cửa hàng - thực tế sẽ fetch từ API
+  const stores = [
+    { id: 1, name: 'Hasaki Nguyễn Huệ',   addr: '45 Nguyễn Huệ, Q1',      lat: 10.7732, lng: 106.7038, phone: '028 1234 5678' },
+    { id: 2, name: 'Hasaki Crescent Mall', addr: 'Phú Mỹ Hưng, Q7',        lat: 10.7290, lng: 106.7180, phone: '028 2345 6789' },
+    { id: 3, name: 'Hasaki Aeon Tân Phú',  addr: 'Aeon Mall, Tân Phú',     lat: 10.8014, lng: 106.6173, phone: '028 3456 7890' },
+    { id: 4, name: 'Hasaki Vincom Đồng Khởi', addr: '72 Lê Thánh Tôn, Q1', lat: 10.7780, lng: 106.7028, phone: '028 4567 8901' },
+    { id: 5, name: 'Hasaki Gò Vấp',        addr: 'Quang Trung, Gò Vấp',    lat: 10.8409, lng: 106.6655, phone: '028 5678 9012' },
+    { id: 6, name: 'Hasaki Thủ Đức',       addr: 'Võ Văn Ngân, Thủ Đức',   lat: 10.8505, lng: 106.7717, phone: '028 6789 0123' }
+  ];
+
+  const map = L.map('map');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const sidebar = document.getElementById('sidebar');
+  const markers = {};  // lưu marker theo id để click sidebar mở popup
+
+  // Loop qua data tạo marker + sidebar item
+  stores.forEach(s => {
+    // Tạo marker
+    const marker = L.marker([s.lat, s.lng])
+      .addTo(map)
+      .bindPopup(`<b>${s.name}</b><br>${s.addr}<br>☎️ ${s.phone}`);
+    markers[s.id] = marker;
+
+    // Tạo item sidebar
+    const item = document.createElement('div');
+    item.className = 'store';
+    item.innerHTML = `<h4>${s.name}</h4><p>📍 ${s.addr}</p><p>☎️ ${s.phone}</p>`;
+    item.onclick = () => {
+      map.setView([s.lat, s.lng], 16);
+      markers[s.id].openPopup();
+    };
+    sidebar.appendChild(item);
+  });
+
+  // Trick hay: tự động zoom vừa khít với tất cả marker
+  const group = L.featureGroup(Object.values(markers));
+  map.fitBounds(group.getBounds().pad(0.1));  // pad = thêm padding 10%
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>05 - Marker Cluster</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Plugin MarkerCluster: CSS + 2 file CSS (default + skin) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #map { height: calc(100vh - 60px); }
+  a { color: #fff; }
+  .info { background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>05 - Marker Cluster</b> - Gom nhóm 200 cửa hàng giả lập
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+  const map = L.map('map').setView([10.78, 106.70], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Thay vì gọi addTo(map) trên từng marker, ta thêm vào cluster group
+  // Lúc zoom out: tự gom thành cụm có số đếm
+  // Lúc zoom in:  tự tách ra
+  const clusterGroup = L.markerClusterGroup({
+    chunkedLoading: true,           // load dần khi data lớn (>10k)
+    spiderfyOnMaxZoom: true,        // ở zoom max vẫn trùng → "xoè ra như chân nhện"
+    showCoverageOnHover: true,      // hover cụm → highlight vùng
+    zoomToBoundsOnClick: true,      // click cụm → tự zoom vừa khít
+    maxClusterRadius: 60            // bán kính px gom nhóm (mặc định 80)
+  });
+
+  // Sinh 200 cửa hàng ngẫu nhiên quanh TP.HCM
+  const centerLat = 10.78, centerLng = 106.70;
+  const stores = [];
+  for (let i = 1; i <= 200; i++) {
+    stores.push({
+      id: i,
+      name: 'Hasaki CN ' + i,
+      lat: centerLat + (Math.random() - 0.5) * 0.25,
+      lng: centerLng + (Math.random() - 0.5) * 0.30
+    });
+  }
+
+  stores.forEach(s => {
+    const m = L.marker([s.lat, s.lng]).bindPopup(`<b>${s.name}</b>`);
+    clusterGroup.addLayer(m);  // thêm vào cluster, không phải map
+  });
+
+  map.addLayer(clusterGroup);  // 1 lần duy nhất - cluster tự quản lý
+
+  // Hiển thị info góc dưới
+  const info = L.control({ position: 'bottomleft' });
+  info.onAdd = function() {
+    const div = L.DomUtil.create('div', 'info');
+    div.innerHTML = `📊 Tổng ${stores.length} cửa hàng - Thử zoom in/out để xem cluster tách/gộp`;
+    return div;
+  };
+  info.addTo(map);
+
+  // Tuỳ biến icon cluster (optional) - đổi màu theo số lượng
+  // Xem thêm: https://github.com/Leaflet/Leaflet.markercluster#customising-the-clustered-markers
+</script>
+</body>
+</html>

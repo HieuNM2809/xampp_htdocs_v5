@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Leaflet Map - Cơ bản đến Nâng cao</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #222; }
+  h1 { border-bottom: 2px solid #e91e63; padding-bottom: 10px; }
+  .level { font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; margin-left: 8px; }
+  .basic { background: #4caf50; }
+  .inter { background: #ff9800; }
+  .adv   { background: #f44336; }
+  ol li { padding: 10px 0; border-bottom: 1px solid #eee; }
+  ol li a { text-decoration: none; color: #1976d2; font-weight: 600; }
+  ol li a:hover { text-decoration: underline; }
+  .desc { display: block; color: #555; font-size: 14px; margin-top: 4px; font-weight: normal; }
+</style>
+</head>
+<body>
+  <h1>🗺️ Leaflet Map - Từ cơ bản đến nâng cao</h1>
+  <p>Bộ ví dụ Leaflet.js thực tế theo kịch bản <b>store locator</b> (định vị cửa hàng). Mỗi file độc lập, dùng CDN, mở trực tiếp bằng trình duyệt là chạy.</p>
+
+  <ol>
+    <li>
+      <a href="01-basic.html">01 - Bản đồ cơ bản</a> <span class="level basic">CƠ BẢN</span>
+      <span class="desc">Khởi tạo map, gắn tile OpenStreetMap, set view tới TP.HCM.</span>
+    </li>
+    <li>
+      <a href="02-markers.html">02 - Marker và Popup</a> <span class="level basic">CƠ BẢN</span>
+      <span class="desc">Thêm marker, popup khi click, tooltip khi hover.</span>
+    </li>
+    <li>
+      <a href="03-multiple-stores.html">03 - Hiển thị nhiều cửa hàng từ data</a> <span class="level basic">CƠ BẢN</span>
+      <span class="desc">Loop qua array, tự động fit bounds, popup chi tiết.</span>
+    </li>
+    <li>
+      <a href="04-custom-icons.html">04 - Icon tùy chỉnh</a> <span class="level inter">TRUNG BÌNH</span>
+      <span class="desc">DivIcon (HTML/CSS) và Icon từ ảnh PNG.</span>
+    </li>
+    <li>
+      <a href="05-marker-cluster.html">05 - Gom nhóm marker (Cluster)</a> <span class="level inter">TRUNG BÌNH</span>
+      <span class="desc">Plugin MarkerCluster - cần khi có >50 marker.</span>
+    </li>
+    <li>
+      <a href="06-nearest-store.html">06 - Tìm cửa hàng gần nhất</a> <span class="level inter">TRUNG BÌNH</span>
+      <span class="desc">Geolocation API + công thức Haversine tính khoảng cách.</span>
+    </li>
+    <li>
+      <a href="07-routing.html">07 - Chỉ đường (Routing)</a> <span class="level adv">NÂNG CAO</span>
+      <span class="desc">Plugin Leaflet Routing Machine + OSRM service miễn phí.</span>
+    </li>
+    <li>
+      <a href="08-geojson-polygon.html">08 - GeoJSON vẽ vùng/quận</a> <span class="level adv">NÂNG CAO</span>
+      <span class="desc">Vẽ polygon, đổi màu theo dữ liệu (choropleth), interactive.</span>
+    </li>
+    <li>
+      <a href="09-search-geocoding.html">09 - Tìm kiếm địa chỉ (Geocoding)</a> <span class="level adv">NÂNG CAO</span>
+      <span class="desc">Search box - convert địa chỉ sang toạ độ qua Nominatim.</span>
+    </li>
+    <li>
+      <a href="10-heatmap.html">10 - Bản đồ nhiệt (Heatmap)</a> <span class="level adv">NÂNG CAO</span>
+      <span class="desc">Trực quan mật độ - phù hợp phân tích vùng mua sắm.</span>
+    </li>
+  </ol>
+
+  <p style="margin-top:30px;color:#888;font-size:13px;">
+    💡 <b>Mẹo:</b> Mở DevTools (F12) → tab Console để xem các log mẫu trong từng ví dụ.<br>
+    📦 Tất cả thư viện đều load từ CDN, không cần cài đặt gì.
+  </p>
+</body>
+</html>

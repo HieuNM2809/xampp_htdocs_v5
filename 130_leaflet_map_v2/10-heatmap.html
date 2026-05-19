@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>10 - Heatmap</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #toolbar { padding: 10px 20px; background: #fff3e0; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+  #map { height: calc(100vh - 110px); }
+  a { color: #fff; }
+  label { font-size: 13px; }
+  input[type=range] { vertical-align: middle; }
+  button { padding: 6px 12px; background: #e91e63; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>10 - Heatmap</b> - Mật độ đơn hàng/người dùng theo vùng
+</div>
+<div id="toolbar">
+  <label>Radius: <input type="range" id="radius" min="10" max="60" value="25"> <span id="radiusVal">25</span>px</label>
+  <label>Blur: <input type="range" id="blur" min="5" max="40" value="15"> <span id="blurVal">15</span>px</label>
+  <label>Max: <input type="range" id="max" min="1" max="20" value="5"> <span id="maxVal">5</span></label>
+  <button onclick="regenerate()">🎲 Sinh dữ liệu mới</button>
+  <span id="count" style="color:#666; font-size:13px;"></span>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+  const map = L.map('map').setView([10.78, 106.70], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // === Sinh dữ liệu đơn hàng giả lập ===
+  // Mỗi điểm dạng [lat, lng, intensity]
+  // intensity = trọng số (vd: số đơn, doanh thu) - càng cao càng "nóng"
+  function generateOrders() {
+    const points = [];
+    // 3 cụm hot (Q1, Q3, Phú Mỹ Hưng) - 200 điểm
+    const hotspots = [
+      { lat: 10.7770, lng: 106.7000, n: 200 },  // Q1
+      { lat: 10.7850, lng: 106.6850, n: 150 },  // Q3
+      { lat: 10.7290, lng: 106.7180, n: 120 }   // Q7 PMH
+    ];
+    hotspots.forEach(h => {
+      for (let i = 0; i < h.n; i++) {
+        // gaussian-ish: tập trung gần center, thưa dần ra ngoài
+        const lat = h.lat + (Math.random() - 0.5) * 0.04;
+        const lng = h.lng + (Math.random() - 0.5) * 0.04;
+        const intensity = Math.random() * 3 + 1;  // 1.0 - 4.0
+        points.push([lat, lng, intensity]);
+      }
+    });
+    // 100 điểm rải rác toàn thành phố (noise)
+    for (let i = 0; i < 100; i++) {
+      points.push([
+        10.78 + (Math.random() - 0.5) * 0.25,
+        106.70 + (Math.random() - 0.5) * 0.3,
+        Math.random() * 2  // intensity thấp
+      ]);
+    }
+    return points;
+  }
+
+  let heatLayer = null;
+  let currentData = [];
+
+  function draw() {
+    const radius = +document.getElementById('radius').value;
+    const blur   = +document.getElementById('blur').value;
+    const max    = +document.getElementById('max').value;
+
+    if (heatLayer) map.removeLayer(heatLayer);
+
+    heatLayer = L.heatLayer(currentData, {
+      radius: radius,    // bán kính px của mỗi điểm
+      blur:   blur,      // độ mờ
+      maxZoom: 17,
+      max: max,          // giá trị intensity max → 100% nóng
+      // gradient: tuỳ biến màu - mặc định xanh→vàng→đỏ
+      gradient: {
+        0.2: '#3949ab',
+        0.4: '#00bcd4',
+        0.6: '#ffc107',
+        0.8: '#ff5722',
+        1.0: '#b71c1c'
+      }
+    }).addTo(map);
+  }
+
+  function regenerate() {
+    currentData = generateOrders();
+    document.getElementById('count').textContent = `📊 ${currentData.length} điểm dữ liệu`;
+    draw();
+  }
+
+  // Bind sliders - cập nhật heatmap real-time
+  ['radius','blur','max'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      document.getElementById(id+'Val').textContent = el.value;
+      draw();
+    });
+  });
+
+  regenerate();  // chạy lần đầu
+
+  // 💡 Ứng dụng thực tế:
+  //   - Mật độ khách hàng → quyết định mở chi nhánh mới
+  //   - Heat map đơn hàng theo giờ → tối ưu shipper
+  //   - Vùng "lạnh" → target marketing tăng nhận diện
+</script>
+</body>
+</html>

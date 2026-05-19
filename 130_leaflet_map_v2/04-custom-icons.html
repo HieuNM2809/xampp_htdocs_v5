@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>04 - Icon tùy chỉnh</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #map { height: calc(100vh - 60px); }
+  a { color: #fff; }
+
+  /* CSS cho DivIcon - cách "xịn" nhất vì không phụ thuộc file ảnh */
+  .pin {
+    width: 36px; height: 36px;
+    border-radius: 50% 50% 50% 0;
+    background: #e91e63;
+    transform: rotate(-45deg);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pin span { transform: rotate(45deg); color: #fff; font-weight: bold; font-size: 16px; }
+  .pin.green { background: #4caf50; }
+  .pin.blue  { background: #2196f3; }
+
+  /* Badge số lượng - kiểu pin tròn có chữ số */
+  .badge {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #ff5722;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>04 - Icon tùy chỉnh</b> - DivIcon (HTML/CSS) và Icon ảnh
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([10.776, 106.700], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // ===== CÁCH 1: DivIcon - dùng HTML + CSS =====
+  // Ưu điểm: tuỳ biến cực mạnh, không cần file ảnh, dễ animation
+  const pinHasaki = L.divIcon({
+    className: '',  // bỏ class mặc định để không bị style đè
+    html: '<div class="pin"><span>H</span></div>',
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],   // điểm "chân" cắm xuống bản đồ
+    popupAnchor: [0, -36]   // popup hiện phía trên pin
+  });
+
+  L.marker([10.7768, 106.7009], { icon: pinHasaki })
+    .addTo(map)
+    .bindPopup('DivIcon - Pin có chữ H');
+
+  // Pin màu xanh lá
+  const pinGreen = L.divIcon({
+    className: '',
+    html: '<div class="pin green"><span>✓</span></div>',
+    iconSize: [36, 36], iconAnchor: [18, 36]
+  });
+  L.marker([10.7785, 106.7040], { icon: pinGreen })
+    .addTo(map)
+    .bindPopup('Pin xanh - cửa hàng có khuyến mãi');
+
+  // Badge có số
+  const badge12 = L.divIcon({
+    className: '',
+    html: '<div class="badge">12</div>',
+    iconSize: [32, 32], iconAnchor: [16, 16]
+  });
+  L.marker([10.7740, 106.6970], { icon: badge12 })
+    .addTo(map)
+    .bindPopup('Badge - hiển thị số lượng (12 chi nhánh khu vực)');
+
+  // ===== CÁCH 2: Icon từ ảnh PNG =====
+  // Dùng khi cần logo công ty, icon do designer làm sẵn
+  const iconShop = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/3081/3081559.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40]
+  });
+  L.marker([10.7720, 106.7020], { icon: iconShop })
+    .addTo(map)
+    .bindPopup('Icon ảnh PNG từ flaticon.com');
+
+  // ===== CÁCH 3: Emoji làm icon (siêu nhanh, không cần CSS) =====
+  const emojiIcon = L.divIcon({
+    className: '',
+    html: '<div style="font-size:32px;">🛍️</div>',
+    iconSize: [32, 32], iconAnchor: [16, 32]
+  });
+  L.marker([10.7800, 106.6990], { icon: emojiIcon })
+    .addTo(map)
+    .bindPopup('Emoji - cách nhanh nhất!');
+</script>
+</body>
+</html>

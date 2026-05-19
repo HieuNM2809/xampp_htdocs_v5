@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>02 - Marker và Popup</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #map { height: calc(100vh - 60px); }
+  a { color: #fff; }
+  .popup-title { font-weight: bold; color: #e91e63; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>02 - Marker và Popup</b> - Thêm điểm và hộp thông tin
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([10.776889, 106.700981], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Cách 1: Marker đơn giản với popup
+  const m1 = L.marker([10.776889, 106.700981]).addTo(map);
+  m1.bindPopup('<div class="popup-title">Hasaki Quận 1</div>Nguyễn Huệ, Q1, TP.HCM');
+
+  // Cách 2: Marker với tooltip (hiện khi rê chuột) + popup (hiện khi click)
+  const m2 = L.marker([10.7731, 106.6957]).addTo(map);
+  m2.bindTooltip('Rê chuột để xem nhanh', { permanent: false, direction: 'top' });
+  m2.bindPopup(`
+    <div class="popup-title">Hasaki Bến Thành</div>
+    <p>📍 Lê Lợi, Quận 1</p>
+    <p>🕐 8:00 - 22:00</p>
+    <p>☎️ 1900 6324</p>
+  `);
+
+  // Cách 3: Tự động mở popup ngay khi map load
+  L.marker([10.7798, 106.7041])
+    .addTo(map)
+    .bindPopup('Marker tự mở popup')
+    .openPopup();
+
+  // Lắng nghe sự kiện click trên map - bài học quan trọng!
+  map.on('click', function(e) {
+    console.log('Bạn click toạ độ:', e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6));
+    // Có thể thêm marker tại điểm click:
+    // L.marker(e.latlng).addTo(map);
+  });
+</script>
+</body>
+</html>

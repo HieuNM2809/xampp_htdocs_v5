@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>07 - Chỉ đường (Routing)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<style>
+  body { margin: 0; font-family: Segoe UI, sans-serif; }
+  #header { padding: 12px 20px; background: #e91e63; color: #fff; }
+  #map { height: calc(100vh - 60px); }
+  a { color: #fff; }
+
+  /* Tuỳ biến UI panel chỉ đường */
+  .leaflet-routing-container {
+    background: #fff;
+    width: 320px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .leaflet-routing-container h2 { font-size: 14px; color: #e91e63; }
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html">← Quay lại</a> &nbsp;|&nbsp;
+  <b>07 - Chỉ đường</b> - Routing Machine + OSRM (kéo thả 2 đầu để đổi route)
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script>
+  const map = L.map('map').setView([10.78, 106.70], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // === Khởi tạo Routing ===
+  // Mặc định plugin dùng OSRM demo server (miễn phí, có rate limit)
+  // Cho production: nên self-host OSRM hoặc dùng dịch vụ Mapbox/GraphHopper
+  const routing = L.Routing.control({
+    waypoints: [
+      L.latLng(10.7732, 106.7038),  // Hasaki Nguyễn Huệ
+      L.latLng(10.8014, 106.6173)   // Hasaki Aeon Tân Phú
+    ],
+    routeWhileDragging: true,         // tính lại route khi kéo điểm
+    showAlternatives: true,           // hiện route phụ (alternative)
+    fitSelectedRoutes: true,          // tự zoom vừa khít
+
+    // Đổi ngôn ngữ panel sang tiếng Việt (một số chuỗi)
+    language: 'en',                   // plugin chưa có 'vi' chuẩn
+
+    // Tuỳ biến màu line chỉ đường
+    lineOptions: {
+      styles: [{ color: '#e91e63', weight: 5, opacity: 0.8 }]
+    },
+    altLineOptions: {
+      styles: [{ color: '#999', weight: 4, opacity: 0.5, dashArray: '6 6' }]
+    },
+
+    // Định dạng quãng đường + thời gian hiển thị
+    formatter: new L.Routing.Formatter({
+      language: 'en',
+      units: 'metric'
+    })
+  }).addTo(map);
+
+  // Bắt event khi route được tìm xong - in ra console
+  routing.on('routesfound', function(e) {
+    const r = e.routes[0];
+    console.log('Tổng km:', (r.summary.totalDistance / 1000).toFixed(2));
+    console.log('Tổng phút:', Math.round(r.summary.totalTime / 60));
+  });
+
+  // === Tip nâng cao: Gọi OSRM trực tiếp (không dùng plugin) ===
+  // Khi cần nhúng kết quả vào UI riêng, không show panel mặc định:
+  /*
+  fetch('https://router.project-osrm.org/route/v1/driving/106.7038,10.7732;106.6173,10.8014?overview=full&geometries=geojson')
+    .then(r => r.json())
+    .then(data => {
+      const coords = data.routes[0].geometry.coordinates;
+      const latlngs = coords.map(c => [c[1], c[0]]);  // OSRM trả [lng,lat], Leaflet cần [lat,lng]
+      L.polyline(latlngs, { color: 'blue' }).addTo(map);
+    });
+  */
+</script>
+</body>
+</html>
