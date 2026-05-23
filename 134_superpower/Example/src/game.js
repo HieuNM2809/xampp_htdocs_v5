@@ -1,5 +1,6 @@
 import { createInput } from './input.js';
 import { Player } from './entities/player.js';
+import { resolveAabb } from './physics.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -23,9 +24,13 @@ export function createGame(canvas) {
   const player = new Player(100, 300);
   game.player = player;
 
+  const tmpFloor = { x: 0, y: 416, w: 800, h: 64 };
+  game.tmpFloor = tmpFloor;
+
   function update(dt) {
     game.frame++;
     player.update(dt, game);
+    resolveAabb(player, tmpFloor);
   }
 
   function render() {
@@ -37,6 +42,8 @@ export function createGame(canvas) {
     const dbg = ['left','right','jump','run','fire','confirm','pause']
       .filter(a => input.isHeld(a)).join(' ');
     ctx.fillText(`Input: ${dbg}`, 20, 60);
+    ctx.fillStyle = '#6b4423';
+    ctx.fillRect(tmpFloor.x, tmpFloor.y, tmpFloor.w, tmpFloor.h);
     player.render(ctx);
   }
 

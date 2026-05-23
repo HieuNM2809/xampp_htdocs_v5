@@ -1,9 +1,12 @@
 import { fillRoundRect, fillEllipse } from '../renderer.js';
+import { applyGravity } from '../physics.js';
 
 const WALK_ACCEL = 600;
 const RUN_ACCEL  = 900;
 const WALK_MAX   = 180;
 const RUN_MAX    = 280;
+const JUMP_SPEED       = 480;
+const JUMP_CUT_FACTOR  = 0.45;
 
 export const PLAYER_SIZES = {
   small: { w: 28, h: 32 },
@@ -40,6 +43,21 @@ export class Player {
     this.vx = Math.max(-maxV, Math.min(maxV, this.vx));
 
     this.x += this.vx * dt;
+
+    // Jump
+    if (world.input.wasPressed('jump') && this.onGround) {
+      this.vy = -JUMP_SPEED;
+      this.onGround = false;
+    }
+    // Variable height: release jump early → cut vy
+    if (!world.input.isHeld('jump') && this.vy < 0) {
+      this.vy *= JUMP_CUT_FACTOR;
+      if (this.vy > -1) this.vy = 0;
+    }
+
+    applyGravity(this, dt);
+    this.y += this.vy * dt;
+    this.onGround = false;  // reset; collision resolver will set true if standing
   }
 
   render(ctx, camera) {
