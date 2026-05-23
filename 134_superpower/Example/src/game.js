@@ -1,6 +1,7 @@
 import { createInput } from './input.js';
 import { Player } from './entities/player.js';
 import { resolveAabb } from './physics.js';
+import { createBlock } from './entities/block.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -24,13 +25,20 @@ export function createGame(canvas) {
   const player = new Player(100, 300);
   game.player = player;
 
-  const tmpFloor = { x: 0, y: 416, w: 800, h: 64 };
-  game.tmpFloor = tmpFloor;
+  const blocks = [
+    createBlock({ type: 'ground', x: 0,   y: 416, w: 800, h: 64 }),
+    createBlock({ type: 'brick',  x: 200, y: 320 }),
+    createBlock({ type: 'qblock', x: 232, y: 320, contains: 'coin' }),
+    createBlock({ type: 'qblock', x: 264, y: 320, contains: 'mushroom' }),
+    createBlock({ type: 'pipe',   x: 400, y: 368, h: 48 }),
+    createBlock({ type: 'flag',   x: 700, y: 216 }),
+  ];
+  game.blocks = blocks;
 
   function update(dt) {
     game.frame++;
     player.update(dt, game);
-    resolveAabb(player, tmpFloor);
+    for (const b of blocks) resolveAabb(player, b);
   }
 
   function render() {
@@ -42,8 +50,7 @@ export function createGame(canvas) {
     const dbg = ['left','right','jump','run','fire','confirm','pause']
       .filter(a => input.isHeld(a)).join(' ');
     ctx.fillText(`Input: ${dbg}`, 20, 60);
-    ctx.fillStyle = '#6b4423';
-    ctx.fillRect(tmpFloor.x, tmpFloor.y, tmpFloor.w, tmpFloor.h);
+    for (const b of blocks) b.render(ctx);
     player.render(ctx);
   }
 
