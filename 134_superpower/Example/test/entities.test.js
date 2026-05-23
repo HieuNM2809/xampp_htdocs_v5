@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Goomba } from '../src/entities/goomba.js';
 import { Koopa } from '../src/entities/koopa.js';
+import { Boss } from '../src/entities/boss.js';
 
 describe('Goomba', () => {
   it('walks left by default', () => {
@@ -49,5 +50,34 @@ describe('Koopa', () => {
     k.stomped();
     expect(k.phase).toBe('shell');
     expect(k.vx).toBe(0);
+  });
+});
+
+describe('Boss', () => {
+  it('starts with hp=5', () => {
+    const b = new Boss(800, 360);
+    expect(b.hp).toBe(5);
+  });
+  it('damage() reduces hp', () => {
+    const b = new Boss(800, 360);
+    b.damage();
+    expect(b.hp).toBe(4);
+    expect(b.dead).toBe(false);
+  });
+  it('dies when hp reaches 0', () => {
+    const b = new Boss(800, 360);
+    for (let i = 0; i < 5; i++) {
+      b.damage();
+      b.invulnT = 0;  // reset invuln so damage applies repeatedly
+    }
+    expect(b.hp).toBe(0);
+    expect(b.dead).toBe(true);
+  });
+  it('immune during invuln window after damage', () => {
+    const b = new Boss(800, 360);
+    b.damage();
+    expect(b.invulnT).toBeGreaterThan(0);
+    b.damage();
+    expect(b.hp).toBe(4);
   });
 });
