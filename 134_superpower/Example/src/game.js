@@ -48,6 +48,12 @@ export function createGame(canvas) {
   game.currentLevel = -1;
   game.background = 'sky';
 
+  game.debug = {
+    aabb: false,
+    stats: false,
+    god: false,
+  };
+
   const camera = { x: 0, y: 0 };
   game.camera = camera;
 
@@ -385,6 +391,27 @@ export function createGame(canvas) {
       world: game.levelName ?? '', lives: game.lives, time: '---'
     });
 
+    // Debug overlay
+    if (game.debug.aabb && game.player) {
+      ctx.save();
+      ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
+      ctx.strokeStyle = '#0f0'; ctx.lineWidth = 1;
+      const all = [game.player, ...game.blocks, ...game.enemies, ...game.items, ...game.fireballs];
+      for (const e of all) {
+        const a = e.getAABB?.() ?? e;
+        ctx.strokeRect(a.x, a.y, a.w, a.h);
+      }
+      ctx.restore();
+    }
+    if (game.debug.stats) {
+      ctx.fillStyle = '#0f0';
+      ctx.font = '12px monospace';
+      ctx.fillText(`FPS ${game.fps}`, 10, 60);
+      ctx.fillText(`Entities ${game.blocks.length + game.enemies.length + game.items.length + game.fireballs.length}`, 10, 76);
+      if (game.player) ctx.fillText(`Mario ${game.player.form} (${Math.round(game.player.x)},${Math.round(game.player.y)})`, 10, 92);
+      if (game.debug.god) ctx.fillText('GOD MODE', 10, 108);
+    }
+
     if (game.state === 'PAUSED') renderPauseOverlay(ctx);
   }
 
@@ -430,6 +457,14 @@ export function createGame(canvas) {
     }
     if (game.state === 'GAME_OVER' && inp.wasPressed('quit')) { audio.stopMusic(); game.state = 'MENU'; }
 
+    if (inp.wasPressed('debugAABB'))  game.debug.aabb  = !game.debug.aabb;
+    if (inp.wasPressed('debugStats')) game.debug.stats = !game.debug.stats;
+    if (inp.wasPressed('debugLevel')) {
+      const next = (game.currentLevel + 1) % LEVEL_FILES.length;
+      loadLevel(next);
+    }
+    if (inp.wasPressed('debugGod'))   game.debug.god   = !game.debug.god;
+
     while (game._acc >= FIXED_DT) {
       update(FIXED_DT);
       game._acc -= FIXED_DT;
@@ -448,6 +483,7 @@ export function createGame(canvas) {
   }
 
   function onPlayerHit(p, g) {
+    if (g.debug?.god) return;
     if (g.frame < p.invulnUntil) return;
     if (p.form === 'fire') {
       p.form = 'big';
