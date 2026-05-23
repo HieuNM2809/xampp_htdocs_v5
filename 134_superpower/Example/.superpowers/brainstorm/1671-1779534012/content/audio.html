@@ -1,0 +1,93 @@
+<h2>Phần 5/7 — Audio</h2>
+<p class="subtitle">WebAudio API tự sinh âm — không cần file .mp3/.wav</p>
+
+<style>
+  .sfx-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.85rem; margin: 0.5rem 0;
+  }
+  .sfx-table th, .sfx-table td {
+    border: 1px solid #ccc; padding: 0.4rem 0.6rem;
+    text-align: left;
+  }
+  .sfx-table th { background: #f5f5f5 }
+  .sfx-table td code { background: #fffacd; padding: 1px 4px; font-size: 0.78rem }
+  .code-box {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 0.9rem; border-radius: 6px;
+    font-family: monospace; font-size: 0.78rem;
+    line-height: 1.5; white-space: pre; overflow-x: auto;
+  }
+  .code-box .kw { color: #569cd6 }
+  .code-box .str { color: #ce9178 }
+  .code-box .num { color: #b5cea8 }
+  .code-box .cm { color: #6a9955 }
+  .code-box .fn { color: #dcdcaa }
+</style>
+
+<div class="section">
+  <h3>🎯 Tại sao dùng WebAudio synthesis</h3>
+  <ul style="font-size:0.9rem">
+    <li><strong>Không có file asset</strong> — repo gọn, không lo bản quyền nhạc Mario</li>
+    <li><strong>Đậm chất chiptune</strong> — sóng vuông/sawtooth hợp với phong cách retro</li>
+    <li><strong>Khởi tạo nhanh</strong> — không có loading time</li>
+    <li>Trade-off: nhạc nền đơn giản hơn (giai điệu ngắn lặp lại), không bằng nhạc thực</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>🔊 Bảng SFX</h3>
+  <table class="sfx-table">
+    <thead><tr><th>Tên</th><th>Trigger</th><th>Mô tả âm</th></tr></thead>
+    <tbody>
+      <tr><td><code>jump</code></td><td>Player nhảy</td><td>Sóng square, pitch sweep 400→800Hz, 80ms</td></tr>
+      <tr><td><code>coin</code></td><td>Ăn coin</td><td>Hai nốt B5→E6 sine, 100ms</td></tr>
+      <tr><td><code>stomp</code></td><td>Đạp địch</td><td>Noise burst + low square, 60ms</td></tr>
+      <tr><td><code>powerup</code></td><td>Ăn nấm/hoa</td><td>Arpeggio 4 nốt C-E-G-C, square, 400ms</td></tr>
+      <tr><td><code>fireball</code></td><td>Bắn lửa</td><td>Sweep 200→100Hz sawtooth, 100ms</td></tr>
+      <tr><td><code>hit</code></td><td>Mario bị đánh</td><td>Square 200Hz → 80Hz, 300ms</td></tr>
+      <tr><td><code>die</code></td><td>Mario chết</td><td>Melody buồn 6 nốt giảm dần, 1.2s</td></tr>
+      <tr><td><code>break</code></td><td>Vỡ brick</td><td>Noise burst 50ms + pitch</td></tr>
+      <tr><td><code>levelClear</code></td><td>Tới flag</td><td>Fanfare 6 nốt thăng lên</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>🎼 Nhạc nền</h3>
+  <p style="font-size:0.9rem">3 track tương ứng background của level:</p>
+  <ul style="font-size:0.85rem">
+    <li><code>overworld</code> — vui, vừa nhanh (L1, L3)</li>
+    <li><code>underground</code> — chậm hơn, âm sâu (L2)</li>
+    <li><code>castle</code> — minor key, hồi hộp (L4)</li>
+  </ul>
+  <p style="font-size:0.85rem">Mỗi track là một mảng nốt + duration, scheduler dùng <code>audioCtx.currentTime</code> để xếp lịch chính xác, lặp vô hạn.</p>
+</div>
+
+<div class="section">
+  <h3>📐 API của audio.js</h3>
+  <div class="code-box"><span class="cm">// src/audio.js</span>
+<span class="kw">export function</span> <span class="fn">createAudio</span>() {
+  <span class="kw">const</span> ctx = <span class="kw">new</span> AudioContext();
+  <span class="kw">let</span> musicVoice = <span class="kw">null</span>;
+  <span class="kw">let</span> muted = <span class="kw">false</span>;
+
+  <span class="kw">return</span> {
+    <span class="fn">unlock</span>() { <span class="cm">/* gọi 1 lần sau gesture đầu tiên */</span> },
+    <span class="fn">play</span>(sfxName) { <span class="cm">/* phát SFX không chặn nhạc */</span> },
+    <span class="fn">startMusic</span>(trackName) { <span class="cm">/* đổi track, fade in */</span> },
+    <span class="fn">stopMusic</span>() {},
+    <span class="fn">setMuted</span>(v) { muted = v; },
+    <span class="fn">get isMuted</span>() { <span class="kw">return</span> muted }
+  };
+}</div>
+</div>
+
+<div class="section">
+  <h3>🔇 Mute / autoplay</h3>
+  <ul style="font-size:0.85rem">
+    <li>Trình duyệt chặn autoplay → phải gọi <code>audio.unlock()</code> sau lần ấn phím đầu tiên ở MENU</li>
+    <li>Phím <strong>M</strong> bật/tắt âm, lưu trạng thái vào localStorage</li>
+    <li>Nếu user mute, không khởi tạo AudioContext (tiết kiệm CPU)</li>
+  </ul>
+</div>
