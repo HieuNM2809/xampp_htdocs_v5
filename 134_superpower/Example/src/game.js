@@ -167,8 +167,13 @@ export function createGame(canvas) {
       if (e._dead) continue;
       for (const b of game.blocks) {
         if (b.dead) continue;
+        const prevVx = e.vx;
         const result = resolveAabb(e, b);
-        if (result === 'x') e.reverse();
+        if (result === 'x') {
+          // resolveAabb zeroed vx; restore opposite direction
+          e.vx = -prevVx;
+          if (typeof e.facing !== 'undefined') e.facing = e.vx > 0 ? 1 : -1;
+        }
         if (result === 'y') {
           if (e.vy === 0 && e.y + e.h <= b.y + 1) e.onGround = true;
         }
