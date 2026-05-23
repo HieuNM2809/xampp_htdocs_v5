@@ -2,6 +2,7 @@ import { createInput } from './input.js';
 import { Player } from './entities/player.js';
 import { resolveAabb } from './physics.js';
 import { createBlock } from './entities/block.js';
+import { clear } from './renderer.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -26,7 +27,7 @@ export function createGame(canvas) {
   game.player = player;
 
   const blocks = [
-    createBlock({ type: 'ground', x: 0,   y: 416, w: 800, h: 64 }),
+    createBlock({ type: 'ground', x: 0,   y: 416, w: 3200, h: 64 }),
     createBlock({ type: 'brick',  x: 200, y: 320 }),
     createBlock({ type: 'qblock', x: 232, y: 320, contains: 'coin' }),
     createBlock({ type: 'qblock', x: 264, y: 320, contains: 'mushroom' }),
@@ -35,9 +36,24 @@ export function createGame(canvas) {
   ];
   game.blocks = blocks;
 
+  const camera = { x: 0, y: 0 };
+  game.camera = camera;
+  game.worldWidth = 3200;   // temporary; level loader will set this
+  game.worldHeight = 480;
+
+  function updateCamera() {
+    const cx = player.x + player.w / 2;
+    const screenCx = camera.x + game.width / 2;
+    const deadzone = 100;
+    if (cx - screenCx > deadzone)  camera.x += cx - screenCx - deadzone;
+    if (cx - screenCx < -deadzone) camera.x += cx - screenCx + deadzone;
+    camera.x = Math.max(0, Math.min(game.worldWidth - game.width, camera.x));
+  }
+
   function update(dt) {
     game.frame++;
     player.update(dt, game);
+    updateCamera();
     for (const b of game.blocks) b.update?.(dt);
     for (const b of game.blocks) {
       if (b.dead) continue;
@@ -51,16 +67,20 @@ export function createGame(canvas) {
   }
 
   function render() {
-    ctx.fillStyle = '#5c94fc';
-    ctx.fillRect(0, 0, game.width, game.height);
-    ctx.fillStyle = '#fff';
-    ctx.font = '20px monospace';
-    ctx.fillText(`Frame ${game.frame}  FPS ${game.fps}`, 20, 30);
-    const dbg = ['left','right','jump','run','fire','confirm','pause']
-      .filter(a => input.isHeld(a)).join(' ');
-    ctx.fillText(`Input: ${dbg}`, 20, 60);
+    clear(ctx, '#5c94fc');
+    ctx.save();
+    ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
     for (const b of game.blocks) b.render(ctx);
     player.render(ctx);
+    ctx.restore();
+
+    // HUD (no camera)
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px monospace';
+    ctx.fillText(`FPS ${game.fps}`, 20, 30);
+    const dbg = ['left','right','jump','run','fire','confirm','pause']
+      .filter(a => game.input.isHeld(a)).join(' ');
+    ctx.fillText(`Input: ${dbg}`, 20, 60);
   }
 
   function tick(now) {
