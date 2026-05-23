@@ -6,6 +6,8 @@ import { clear } from './renderer.js';
 
 const FIXED_DT = 1 / 60;
 
+const LEVEL_FILES = ['./levels/level1.js', './levels/level2.js', './levels/level3.js', './levels/level4.js'];
+
 export function createGame(canvas) {
   const ctx = canvas.getContext('2d');
   const game = {
@@ -23,26 +25,32 @@ export function createGame(canvas) {
   const input = createInput();
   game.input = input;
 
-  const player = new Player(100, 300);
-  game.player = player;
-
-  const blocks = [
-    createBlock({ type: 'ground', x: 0,   y: 416, w: 3200, h: 64 }),
-    createBlock({ type: 'brick',  x: 200, y: 320 }),
-    createBlock({ type: 'qblock', x: 232, y: 320, contains: 'coin' }),
-    createBlock({ type: 'qblock', x: 264, y: 320, contains: 'mushroom' }),
-    createBlock({ type: 'pipe',   x: 400, y: 368, h: 48 }),
-    createBlock({ type: 'flag',   x: 700, y: 216 }),
-  ];
-  game.blocks = blocks;
+  game.currentLevel = -1;
+  game.background = 'sky';
 
   const camera = { x: 0, y: 0 };
   game.camera = camera;
-  game.worldWidth = 3200;   // temporary; level loader will set this
-  game.worldHeight = 480;
+
+  async function loadLevel(idx) {
+    const mod = await import(LEVEL_FILES[idx]);
+    const data = mod.default;
+    game.currentLevel = idx;
+    game.worldWidth = data.width;
+    game.worldHeight = data.height;
+    game.background = data.background;
+    game.levelName = data.name;
+    game.blocks = data.blocks.map(createBlock);
+    game.enemies = [];
+    game.coinsInLevel = [];
+    game.player = new Player(data.spawn.x, data.spawn.y);
+    camera.x = 0;
+    camera.y = 0;
+  }
+  game.loadLevel = loadLevel;
 
   function updateCamera() {
-    const cx = player.x + player.w / 2;
+    if (!game.player) return;
+    const cx = game.player.x + game.player.w / 2;
     const screenCx = camera.x + game.width / 2;
     const deadzone = 100;
     if (cx - screenCx > deadzone)  camera.x += cx - screenCx - deadzone;
@@ -51,11 +59,14 @@ export function createGame(canvas) {
   }
 
   function update(dt) {
+    const { player, blocks } = game;
+    if (!player) return;
     game.frame++;
     player.update(dt, game);
     updateCamera();
-    for (const b of game.blocks) b.update?.(dt);
-    for (const b of game.blocks) {
+
+    for (const b of blocks) b.update?.(dt);
+    for (const b of blocks) {
       if (b.dead) continue;
       const prevY = player.y;
       const result = resolveAabb(player, b);
@@ -63,24 +74,31 @@ export function createGame(canvas) {
         b.onBumpFromBelow(player, game);
       }
     }
-    game.blocks = game.blocks.filter(b => !b.dead);
+    game.blocks = blocks.filter(b => !b.dead);
   }
 
   function render() {
-    clear(ctx, '#5c94fc');
+    clear(ctx, backgroundColor(game.background));
+    if (!game.player) return;
     ctx.save();
     ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
     for (const b of game.blocks) b.render(ctx);
-    player.render(ctx);
+    game.player.render(ctx);
     ctx.restore();
 
-    // HUD (no camera)
     ctx.fillStyle = '#fff';
     ctx.font = '20px monospace';
-    ctx.fillText(`FPS ${game.fps}`, 20, 30);
-    const dbg = ['left','right','jump','run','fire','confirm','pause']
-      .filter(a => game.input.isHeld(a)).join(' ');
-    ctx.fillText(`Input: ${dbg}`, 20, 60);
+    ctx.fillText(`FPS ${game.fps}  ${game.levelName ?? ''}`, 20, 30);
+  }
+
+  function backgroundColor(bg) {
+    switch (bg) {
+      case 'sky':    return '#5c94fc';
+      case 'cave':   return '#0a0a0f';
+      case 'night':  return '#1a1a3a';
+      case 'castle': return '#1a0033';
+      default:       return '#5c94fc';
+    }
   }
 
   function tick(now) {
@@ -106,7 +124,9 @@ export function createGame(canvas) {
   }
 
   return {
-    start() { requestAnimationFrame(tick); },
+    start() {
+      loadLevel(0).then(() => requestAnimationFrame(tick));
+    },
     game,
   };
 }

@@ -1,0 +1,26 @@
+export default {
+  name: '1-1 Overworld',
+  width: 3200,
+  height: 480,
+  background: 'sky',
+  music: 'overworld',
+  spawn: { x: 50, y: 320 },
+  blocks: [
+    { type: 'ground', x: 0,    y: 416, w: 1024, h: 64 },
+    { type: 'ground', x: 1100, y: 416, w: 2100, h: 64 },
+    { type: 'brick',  x: 320,  y: 320 },
+    { type: 'qblock', x: 352,  y: 320, contains: 'coin' },
+    { type: 'qblock', x: 384,  y: 320, contains: 'mushroom' },
+    { type: 'brick',  x: 416,  y: 320 },
+    { type: 'pipe',   x: 600,  y: 368, h: 48 },
+    { type: 'pipe',   x: 900,  y: 352, h: 64 },
+    { type: 'brick',  x: 1300, y: 320 },
+    { type: 'brick',  x: 1332, y: 320 },
+    { type: 'qblock', x: 1364, y: 320, contains: 'coin' },
+    { type: 'brick',  x: 1396, y: 320 },
+    { type: 'ground', x: 1500, y: 384, w: 200, h: 96 },
+    { type: 'flag',   x: 3050, y: 216 }
+  ],
+  enemies: [],
+  coins: [],
+};
