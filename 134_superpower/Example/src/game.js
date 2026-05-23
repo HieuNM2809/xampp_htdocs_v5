@@ -1,6 +1,7 @@
 import { createInput } from './input.js';
-import { Player } from './entities/player.js';
-import { resolveAabb } from './physics.js';
+import { Player, PLAYER_SIZES } from './entities/player.js';
+import { Goomba } from './entities/goomba.js';
+import { resolveAabb, aabbOverlap } from './physics.js';
 import { createBlock } from './entities/block.js';
 import { clear } from './renderer.js';
 
@@ -40,7 +41,10 @@ export function createGame(canvas) {
     game.background = data.background;
     game.levelName = data.name;
     game.blocks = data.blocks.map(createBlock);
-    game.enemies = [];
+    game.enemies = data.enemies.map(spec => {
+      if (spec.type === 'goomba') return new Goomba(spec.x, spec.y);
+      throw new Error(`Unknown enemy ${spec.type}`);
+    });
     game.coinsInLevel = [];
     game.player = new Player(data.spawn.x, data.spawn.y);
     camera.x = 0;
@@ -75,6 +79,47 @@ export function createGame(canvas) {
       }
     }
     game.blocks = blocks.filter(b => !b.dead);
+
+    // Enemies update + collide with blocks
+    for (const e of game.enemies) e.update(dt);
+    for (const e of game.enemies) {
+      if (e._dead) continue;
+      for (const b of game.blocks) {
+        if (b.dead) continue;
+        const result = resolveAabb(e, b);
+        if (result === 'x') e.reverse();
+        if (result === 'y') {
+          if (e.vy === 0 && e.y + e.h <= b.y + 1) e.onGround = true;
+        }
+      }
+      // edge detection: turn around if about to walk off ledge
+      if (e.onGround && e.vx !== 0) {
+        const probeX = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
+        const probeY = e.y + e.h + 2;
+        let supported = false;
+        for (const b of game.blocks) {
+          if (b.x <= probeX && probeX <= b.x + b.w && b.y <= probeY && probeY <= b.y + b.h) {
+            supported = true; break;
+          }
+        }
+        if (!supported) e.reverse();
+      }
+    }
+    // Player-vs-enemy
+    for (const e of game.enemies) {
+      if (e._dead) continue;
+      if (!aabbOverlap(player.getAABB(), e.getAABB())) continue;
+      const stomped = player.vy > 0 && player.y + player.h - 8 < e.y;
+      if (stomped) {
+        e.stomped();
+        player.vy = -260;
+        game.score = (game.score ?? 0) + 100;
+      } else {
+        onPlayerHit(player, game);
+      }
+    }
+    // Filter only after dying animation complete (so flat-squish renders for 0.4s)
+    game.enemies = game.enemies.filter(e => !e._dead || (e._dyingT ?? 0) > 0);
   }
 
   function render() {
@@ -83,6 +128,7 @@ export function createGame(canvas) {
     ctx.save();
     ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
     for (const b of game.blocks) b.render(ctx);
+    for (const e of game.enemies) e.render(ctx);
     game.player.render(ctx);
     ctx.restore();
 
@@ -121,6 +167,24 @@ export function createGame(canvas) {
     input.endFrame();
     render();
     requestAnimationFrame(tick);
+  }
+
+  function onPlayerHit(p, g) {
+    if (g.frame < p.invulnUntil) return;
+    if (p.form === 'fire') {
+      p.form = 'big';
+      g.audio?.play?.('hit');
+    } else if (p.form === 'big') {
+      p.form = 'small';
+      g.audio?.play?.('hit');
+    } else {
+      p._dead = true;
+      g.audio?.play?.('die');
+      return;
+    }
+    const s = PLAYER_SIZES[p.form];
+    p.w = s.w; p.h = s.h;
+    p.invulnUntil = g.frame + 90;
   }
 
   return {

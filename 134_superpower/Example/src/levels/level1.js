@@ -21,6 +21,11 @@ export default {
     { type: 'ground', x: 1500, y: 384, w: 200, h: 96 },
     { type: 'flag',   x: 3050, y: 216 }
   ],
-  enemies: [],
+  enemies: [
+    { type: 'goomba', x: 500,  y: 388 },
+    { type: 'goomba', x: 800,  y: 388 },
+    { type: 'goomba', x: 1500, y: 354 },
+    { type: 'goomba', x: 2200, y: 388 },
+  ],
   coins: [],
 };
