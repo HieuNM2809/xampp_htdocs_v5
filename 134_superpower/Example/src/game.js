@@ -4,6 +4,7 @@ import { createStorage } from './storage.js';
 import { Player, PLAYER_SIZES } from './entities/player.js';
 import { Goomba } from './entities/goomba.js';
 import { Koopa } from './entities/koopa.js';
+import { Boss } from './entities/boss.js';
 import { resolveAabb, aabbOverlap } from './physics.js';
 import { createBlock } from './entities/block.js';
 import { clear } from './renderer.js';
@@ -60,11 +61,12 @@ export function createGame(canvas) {
     audio.startMusic(data.music);
     game.levelName = data.name;
     game.blocks = data.blocks.map(createBlock);
-    game.enemies = data.enemies.map(spec => {
-      if (spec.type === 'goomba') return new Goomba(spec.x, spec.y, { flying: !!spec.flying });
-      if (spec.type === 'koopa')  return new Koopa(spec.x, spec.y);
-      throw new Error(`Unknown enemy ${spec.type}`);
-    });
+      game.enemies = data.enemies.map(spec => {
+        if (spec.type === 'goomba') return new Goomba(spec.x, spec.y, { flying: !!spec.flying });
+        if (spec.type === 'koopa')  return new Koopa(spec.x, spec.y);
+        if (spec.type === 'boss')   return new Boss(spec.x, spec.y);
+        throw new Error(`Unknown enemy ${spec.type}`);
+      });
     game.items = data.coins.map(c => new Coin(c.x, c.y));
     game.fireballs = [];
     game.coinsInLevel = [];
@@ -79,6 +81,9 @@ export function createGame(canvas) {
   game.spawnFireball = (x, y, dir) => {
     game.fireballs.push(new Fireball(x, y, dir));
     game.audio?.play?.('fireball');
+  };
+  game.spawnBossFireball = (x, y, dir) => {
+    game.fireballs.push(new Fireball(x, y, dir, false));
   };
 
   game.spawnFromQBlock = function(qblock) {
@@ -151,7 +156,7 @@ export function createGame(canvas) {
     game.blocks = blocks.filter(b => !b.dead);
 
     // Enemies update + collide with blocks
-    for (const e of game.enemies) e.update(dt);
+    for (const e of game.enemies) e.update(dt, game);
     for (const e of game.enemies) {
       if (e._dead) continue;
       for (const b of game.blocks) {
@@ -181,6 +186,10 @@ export function createGame(canvas) {
       if (!aabbOverlap(player.getAABB(), e.getAABB())) continue;
       const stomped = player.vy > 0 && player.y + player.h - 8 < e.y;
 
+      if (e instanceof Boss) {
+        onPlayerHit(player, game);
+        continue;
+      }
       if (e instanceof Koopa) {
         if (e.phase === 'walk') {
           if (stomped) {
@@ -293,16 +302,35 @@ export function createGame(canvas) {
         if (result === 'y' && f.y < b.y) f.onHitGround();
       }
     }
-    // Fireball vs enemies
+    // Friendly fireball vs enemies
     for (const f of game.fireballs) {
-      if (f._dead) continue;
+      if (f._dead || !f.friendly) continue;
       for (const e of game.enemies) {
         if (e._dead) continue;
         if (aabbOverlap(f.getAABB(), e.getAABB())) {
           f.onHitEnemy();
-          e.stomped();
-          game.score = (game.score ?? 0) + 200;
+          if (e instanceof Boss) {
+            e.damage();
+            game.score = (game.score ?? 0) + 500;
+            if (e.dead) {
+              audio.stopMusic();
+              storage.setHiScore(game.score);
+              game.hiScore = storage.getHiScore();
+              game.state = 'VICTORY';
+            }
+          } else {
+            e.stomped();
+            game.score = (game.score ?? 0) + 200;
+          }
         }
+      }
+    }
+    // Hostile fireballs vs player
+    for (const f of game.fireballs) {
+      if (f._dead || f.friendly) continue;
+      if (aabbOverlap(f.getAABB(), player.getAABB())) {
+        f._dead = true;
+        onPlayerHit(player, game);
       }
     }
     game.fireballs = game.fireballs.filter(f => !f._dead);

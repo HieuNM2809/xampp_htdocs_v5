@@ -6,12 +6,13 @@ const BOUNCE_VY = -260;
 const MAX_BOUNCES = 2;
 
 export class Fireball {
-  constructor(x, y, dir) {
+  constructor(x, y, dir, friendly = true) {
     this.x = x; this.y = y;
     this.w = 12; this.h = 12;
     this.vx = SPEED * dir;
-    this.vy = 100;
+    this.vy = friendly ? 100 : 0;
     this.bounces = 0;
+    this.friendly = friendly;
     this._dead = false;
   }
   get dead() { return this._dead; }
@@ -33,10 +34,13 @@ export class Fireball {
   render(ctx) {
     const cx = this.x + this.w / 2;
     const cy = this.y + this.h / 2;
+    const c1 = '#fff';
+    const c2 = this.friendly ? '#ffe27a' : '#9b59b6';
+    const c3 = this.friendly ? '#c0392b' : '#5a006a';
     const g = ctx.createRadialGradient(cx, cy, 1, cx, cy, this.w);
-    g.addColorStop(0, '#fff');
-    g.addColorStop(0.4, '#ffe27a');
-    g.addColorStop(1, '#c0392b');
-    fillCircle(ctx, cx, cy, this.w / 2, g, '#c0392b', 1);
+    g.addColorStop(0, c1);
+    g.addColorStop(0.4, c2);
+    g.addColorStop(1, c3);
+    fillCircle(ctx, cx, cy, this.w / 2, g, c3, 1);
   }
 }
