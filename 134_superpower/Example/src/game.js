@@ -341,16 +341,23 @@ export function createGame(canvas) {
     }
     game.fireballs = game.fireballs.filter(f => !f._dead);
 
-    // Player death (will be enhanced in Task 32 with delay)
-    if (game.player && game.player._dead) {
+    // Player death with 1-second delay
+    if (game.player && game.player._dead && !game.player._respawnT) {
+      game.player._respawnT = 1.0;
+      game.audio?.play?.('die');
       audio.stopMusic();
-      game.lives -= 1;
-      if (game.lives <= 0) {
-        storage.setHiScore(game.score);
-        game.hiScore = storage.getHiScore();
-        game.state = 'GAME_OVER';
-      } else {
-        loadLevel(game.currentLevel);
+    }
+    if (game.player && game.player._respawnT) {
+      game.player._respawnT -= 1/60;
+      if (game.player._respawnT <= 0) {
+        game.lives -= 1;
+        if (game.lives <= 0) {
+          storage.setHiScore(game.score);
+          game.hiScore = storage.getHiScore();
+          game.state = 'GAME_OVER';
+        } else {
+          loadLevel(game.currentLevel);
+        }
       }
     }
   }

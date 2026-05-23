@@ -30,6 +30,7 @@ export class Player {
   getAABB() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
 
   update(dt, world) {
+    this._frame = world.frame;
     const input = world.input;
     const accel = input.isHeld('run') ? RUN_ACCEL : WALK_ACCEL;
     const maxV  = input.isHeld('run') ? RUN_MAX   : WALK_MAX;
@@ -70,6 +71,9 @@ export class Player {
   }
 
   render(ctx, camera) {
+    const blink = this._frame !== undefined && this.invulnUntil && this._frame < this.invulnUntil && (this._frame % 8 < 4);
+    ctx.globalAlpha = blink ? 0.4 : 1;
+
     const x = this.x, y = this.y, w = this.w, h = this.h;
     const isFire = this.form === 'fire';
     const hatColor = isFire ? '#ffffff' : '#e74c3c';
@@ -80,5 +84,7 @@ export class Player {
     fillRoundRect(ctx, x + 3, y + 6, w - 6, h * 0.4, '#ffd5b0', '#5a2a0a', 8);
     // body
     fillRoundRect(ctx, x + 1, y + h * 0.45, w - 2, h * 0.55, bodyColor, '#142850', 8);
+
+    ctx.globalAlpha = 1;
   }
 }
