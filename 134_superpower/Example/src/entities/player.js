@@ -48,6 +48,7 @@ export class Player {
     if (world.input.wasPressed('jump') && this.onGround) {
       this.vy = -JUMP_SPEED;
       this.onGround = false;
+      world.audio?.play?.('jump');
     }
     // Variable height: release jump early → cut vy
     if (!world.input.isHeld('jump') && this.vy < 0) {

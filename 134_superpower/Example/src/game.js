@@ -1,4 +1,5 @@
 import { createInput } from './input.js';
+import { createAudio } from './audio.js';
 import { Player, PLAYER_SIZES } from './entities/player.js';
 import { Goomba } from './entities/goomba.js';
 import { Koopa } from './entities/koopa.js';
@@ -33,6 +34,9 @@ export function createGame(canvas) {
 
   const input = createInput();
   game.input = input;
+
+  const audio = createAudio();
+  game.audio = audio;
 
   game.currentLevel = -1;
   game.background = 'sky';
@@ -367,6 +371,7 @@ export function createGame(canvas) {
       game.audio?.setMuted?.(next);
     }
     if (game.state === 'MENU' && inp.wasPressed('confirm')) {
+      audio.unlock();
       game.score = 0; game.coins = 0; game.lives = 3;
       game.state = 'PLAYING';
       loadLevel(0);
