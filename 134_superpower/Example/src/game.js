@@ -1,5 +1,6 @@
 import { createInput } from './input.js';
 import { createAudio } from './audio.js';
+import { createStorage } from './storage.js';
 import { Player, PLAYER_SIZES } from './entities/player.js';
 import { Goomba } from './entities/goomba.js';
 import { Koopa } from './entities/koopa.js';
@@ -37,6 +38,11 @@ export function createGame(canvas) {
 
   const audio = createAudio();
   game.audio = audio;
+
+  const storage = createStorage();
+  game.storage = storage;
+  game.hiScore = storage.getHiScore();
+  audio.setMuted(storage.getMuted());
 
   game.currentLevel = -1;
   game.background = 'sky';
@@ -103,7 +109,8 @@ export function createGame(canvas) {
         game.levelComplete = false;
       } else {
         audio.stopMusic();
-        if (game.score > game.hiScore) game.hiScore = game.score;
+        storage.setHiScore(game.score);
+        game.hiScore = storage.getHiScore();
         game.state = 'VICTORY';
       }
     }, 1500);
@@ -305,7 +312,8 @@ export function createGame(canvas) {
       audio.stopMusic();
       game.lives -= 1;
       if (game.lives <= 0) {
-        if (game.score > game.hiScore) game.hiScore = game.score;
+        storage.setHiScore(game.score);
+        game.hiScore = storage.getHiScore();
         game.state = 'GAME_OVER';
       } else {
         loadLevel(game.currentLevel);
@@ -370,8 +378,9 @@ export function createGame(canvas) {
     // Global state-machine keys (read once per render frame)
     const inp = game.input;
     if (inp.wasPressed('mute')) {
-      const next = !(game.audio?.isMuted ?? false);
-      game.audio?.setMuted?.(next);
+      const next = !audio.isMuted;
+      audio.setMuted(next);
+      storage.setMuted(next);
     }
     if (game.state === 'MENU' && inp.wasPressed('confirm')) {
       audio.unlock();
