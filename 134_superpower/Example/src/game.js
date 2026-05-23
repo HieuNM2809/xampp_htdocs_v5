@@ -7,6 +7,7 @@ import { createBlock } from './entities/block.js';
 import { clear } from './renderer.js';
 import { Coin, Mushroom, FireFlower, createItem } from './entities/item.js';
 import { Fireball } from './entities/fireball.js';
+import { renderHUD, renderMenu, renderPauseOverlay, renderGameOver, renderVictory } from './ui.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -15,7 +16,7 @@ const LEVEL_FILES = ['./levels/level1.js', './levels/level2.js', './levels/level
 export function createGame(canvas) {
   const ctx = canvas.getContext('2d');
   const game = {
-    state: 'PLAYING',  // temporary — full state machine added in Task 24
+    state: 'MENU',
     width: canvas.width,
     height: canvas.height,
     frame: 0,
@@ -24,6 +25,10 @@ export function createGame(canvas) {
     _last: performance.now(),
     _fpsLast: performance.now(),
     _fpsCount: 0,
+    score: 0,
+    coins: 0,
+    lives: 3,
+    hiScore: 0,
   };
 
   const input = createInput();
@@ -92,6 +97,7 @@ export function createGame(canvas) {
         loadLevel(next);
         game.levelComplete = false;
       } else {
+        if (game.score > game.hiScore) game.hiScore = game.score;
         game.state = 'VICTORY';
       }
     }, 1500);
@@ -107,7 +113,7 @@ export function createGame(canvas) {
     camera.x = Math.max(0, Math.min(game.worldWidth - game.width, camera.x));
   }
 
-  function update(dt) {
+  function updatePlaying(dt) {
     const { player, blocks } = game;
     if (!player) return;
     game.frame++;
@@ -287,23 +293,56 @@ export function createGame(canvas) {
       }
     }
     game.fireballs = game.fireballs.filter(f => !f._dead);
+
+    // Player death (will be enhanced in Task 32 with delay)
+    if (game.player && game.player._dead) {
+      game.lives -= 1;
+      if (game.lives <= 0) {
+        if (game.score > game.hiScore) game.hiScore = game.score;
+        game.state = 'GAME_OVER';
+      } else {
+        loadLevel(game.currentLevel);
+      }
+    }
+  }
+
+  function update(dt) {
+    if (game.state === 'PLAYING') updatePlaying(dt);
   }
 
   function render() {
     clear(ctx, backgroundColor(game.background));
-    if (!game.player) return;
-    ctx.save();
-    ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
-    for (const b of game.blocks) b.render(ctx);
-    for (const it of game.items) it.render(ctx);
-    for (const e of game.enemies) e.render(ctx);
-    for (const f of game.fireballs) f.render(ctx);
-    game.player.render(ctx);
-    ctx.restore();
 
-    ctx.fillStyle = '#fff';
-    ctx.font = '20px monospace';
-    ctx.fillText(`FPS ${game.fps}  ${game.levelName ?? ''}`, 20, 30);
+    if (game.state === 'MENU') {
+      renderMenu(ctx, game.hiScore);
+      return;
+    }
+    if (game.state === 'VICTORY') {
+      renderVictory(ctx, game.score, game.hiScore);
+      return;
+    }
+    if (game.state === 'GAME_OVER') {
+      renderGameOver(ctx, game.score, game.hiScore);
+      return;
+    }
+
+    // PLAYING or PAUSED: draw world + HUD
+    if (game.player) {
+      ctx.save();
+      ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
+      for (const b of game.blocks) b.render(ctx);
+      for (const it of game.items) it.render(ctx);
+      for (const e of game.enemies) e.render(ctx);
+      for (const f of game.fireballs) f.render(ctx);
+      game.player.render(ctx);
+      ctx.restore();
+    }
+    renderHUD(ctx, {
+      score: game.score, coins: game.coins,
+      world: game.levelName ?? '', lives: game.lives, time: '---'
+    });
+
+    if (game.state === 'PAUSED') renderPauseOverlay(ctx);
   }
 
   function backgroundColor(bg) {
@@ -321,8 +360,32 @@ export function createGame(canvas) {
     game._last = now;
     game._acc += Math.min(frame, 0.1);
 
+    // Global state-machine keys (read once per render frame)
+    const inp = game.input;
+    if (inp.wasPressed('mute')) {
+      const next = !(game.audio?.isMuted ?? false);
+      game.audio?.setMuted?.(next);
+    }
+    if (game.state === 'MENU' && inp.wasPressed('confirm')) {
+      game.score = 0; game.coins = 0; game.lives = 3;
+      game.state = 'PLAYING';
+      loadLevel(0);
+    }
+    if (game.state === 'PLAYING' && inp.wasPressed('pause')) game.state = 'PAUSED';
+    else if (game.state === 'PAUSED' && inp.wasPressed('pause')) game.state = 'PLAYING';
+    if (game.state === 'PAUSED' && inp.wasPressed('quit')) game.state = 'MENU';
+    if (game.state === 'GAME_OVER' && inp.wasPressed('retry')) {
+      game.score = 0; game.coins = 0; game.lives = 3;
+      game.state = 'PLAYING';
+      loadLevel(0);
+    }
+    if ((game.state === 'GAME_OVER' || game.state === 'VICTORY') && inp.wasPressed('confirm')) {
+      game.state = 'MENU';
+    }
+    if (game.state === 'GAME_OVER' && inp.wasPressed('quit')) game.state = 'MENU';
+
     while (game._acc >= FIXED_DT) {
-      if (game.state === 'PLAYING') update(FIXED_DT);
+      update(FIXED_DT);
       game._acc -= FIXED_DT;
     }
 
@@ -358,7 +421,7 @@ export function createGame(canvas) {
 
   return {
     start() {
-      loadLevel(0).then(() => requestAnimationFrame(tick));
+      requestAnimationFrame(tick);
     },
     game,
   };
