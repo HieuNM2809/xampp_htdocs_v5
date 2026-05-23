@@ -500,7 +500,6 @@ export function createGame(canvas) {
       g.audio?.play?.('hit');
     } else {
       p._dead = true;
-      g.audio?.play?.('die');
       return;
     }
     const s = PLAYER_SIZES[p.form];
