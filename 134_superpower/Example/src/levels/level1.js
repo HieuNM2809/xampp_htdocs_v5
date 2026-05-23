@@ -16,7 +16,7 @@ export default {
     { type: 'pipe',   x: 900,  y: 352, h: 64 },
     { type: 'brick',  x: 1300, y: 320 },
     { type: 'brick',  x: 1332, y: 320 },
-    { type: 'qblock', x: 1364, y: 320, contains: 'coin' },
+    { type: 'qblock', x: 1364, y: 320, contains: 'fireflower' },
     { type: 'brick',  x: 1396, y: 320 },
     { type: 'ground', x: 1500, y: 384, w: 200, h: 96 },
     { type: 'flag',   x: 3050, y: 216 }

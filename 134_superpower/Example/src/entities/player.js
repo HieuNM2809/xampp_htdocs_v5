@@ -55,6 +55,14 @@ export class Player {
       if (this.vy > -1) this.vy = 0;
     }
 
+    // Fireball shoot
+    if (this.form === 'fire' && world.input.wasPressed('fire')) {
+      const count = (world.fireballs ?? []).filter(f => !f.dead).length;
+      if (count < 2) {
+        world.spawnFireball?.(this.x + this.w / 2, this.y + this.h / 2, this.facing);
+      }
+    }
+
     applyGravity(this, dt);
     this.y += this.vy * dt;
     this.onGround = false;  // reset; collision resolver will set true if standing

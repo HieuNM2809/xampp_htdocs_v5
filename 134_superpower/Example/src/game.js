@@ -6,6 +6,7 @@ import { resolveAabb, aabbOverlap } from './physics.js';
 import { createBlock } from './entities/block.js';
 import { clear } from './renderer.js';
 import { Coin, Mushroom, FireFlower, createItem } from './entities/item.js';
+import { Fireball } from './entities/fireball.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -49,12 +50,19 @@ export function createGame(canvas) {
       throw new Error(`Unknown enemy ${spec.type}`);
     });
     game.items = data.coins.map(c => new Coin(c.x, c.y));
+    game.fireballs = [];
     game.coinsInLevel = [];
     game.player = new Player(data.spawn.x, data.spawn.y);
     camera.x = 0;
     camera.y = 0;
   }
   game.loadLevel = loadLevel;
+
+  game.fireballs = [];
+  game.spawnFireball = (x, y, dir) => {
+    game.fireballs.push(new Fireball(x, y, dir));
+    game.audio?.play?.('fireball');
+  };
 
   game.spawnFromQBlock = function(qblock) {
     const content = qblock.contains;
@@ -231,6 +239,31 @@ export function createGame(canvas) {
       }
     }
     game.items = game.items.filter(it => !it._dead);
+
+    // Fireballs
+    for (const f of game.fireballs) f.update(dt);
+    for (const f of game.fireballs) {
+      if (f._dead) continue;
+      for (const b of game.blocks) {
+        if (b.dead) continue;
+        const result = resolveAabb(f, b);
+        if (result === 'x') f.onHitWall();
+        if (result === 'y' && f.y < b.y) f.onHitGround();
+      }
+    }
+    // Fireball vs enemies
+    for (const f of game.fireballs) {
+      if (f._dead) continue;
+      for (const e of game.enemies) {
+        if (e._dead) continue;
+        if (aabbOverlap(f.getAABB(), e.getAABB())) {
+          f.onHitEnemy();
+          e.stomped();
+          game.score = (game.score ?? 0) + 200;
+        }
+      }
+    }
+    game.fireballs = game.fireballs.filter(f => !f._dead);
   }
 
   function render() {
@@ -241,6 +274,7 @@ export function createGame(canvas) {
     for (const b of game.blocks) b.render(ctx);
     for (const it of game.items) it.render(ctx);
     for (const e of game.enemies) e.render(ctx);
+    for (const f of game.fireballs) f.render(ctx);
     game.player.render(ctx);
     ctx.restore();
 
