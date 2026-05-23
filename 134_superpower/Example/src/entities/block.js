@@ -22,8 +22,26 @@ export class Ground extends BaseBlock {
 }
 
 export class Brick extends BaseBlock {
-  constructor(x, y) { super(x, y, TILE, TILE); }
+  constructor(x, y) { super(x, y, TILE, TILE); this._bumpT = 0; }
+  onBumpFromBelow(player, world) {
+    if (player.form === 'small') {
+      // small Mario bounces brick — no break
+      this._bumpT = 0.15;
+    } else {
+      this._dead = true;     // brick destroyed
+      world.audio?.play?.('break');
+      world.onScore?.(50);
+    }
+  }
+  update(dt) {
+    if (this._bumpT > 0) {
+      this._bumpT -= dt;
+    }
+  }
   render(ctx) {
+    const offset = this._bumpT > 0 ? -6 * Math.sin(this._bumpT / 0.15 * Math.PI) : 0;
+    ctx.save();
+    ctx.translate(0, offset);
     const g = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
     g.addColorStop(0, '#c0392b');
     g.addColorStop(1, '#922b21');
@@ -34,6 +52,7 @@ export class Brick extends BaseBlock {
     ctx.moveTo(this.x + 4, this.y + 8);
     ctx.lineTo(this.x + this.w - 4, this.y + 8);
     ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -42,8 +61,23 @@ export class QBlock extends BaseBlock {
     super(x, y, TILE, TILE);
     this.contains = contains;
     this.used = false;
+    this._bumpT = 0;
+  }
+  onBumpFromBelow(player, world) {
+    if (this.used) return;
+    this.used = true;
+    this._bumpT = 0.15;
+    world.spawnFromQBlock?.(this);
+  }
+  update(dt) {
+    if (this._bumpT > 0) {
+      this._bumpT -= dt;
+    }
   }
   render(ctx) {
+    const offset = this._bumpT > 0 ? -6 * Math.sin(this._bumpT / 0.15 * Math.PI) : 0;
+    ctx.save();
+    ctx.translate(0, offset);
     const g = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
     if (this.used) {
       g.addColorStop(0, '#8b6914'); g.addColorStop(1, '#5a4406');
@@ -58,6 +92,7 @@ export class QBlock extends BaseBlock {
       ctx.fillText('?', this.x + this.w / 2, this.y + this.h - 8);
       ctx.textAlign = 'left';
     }
+    ctx.restore();
   }
 }
 

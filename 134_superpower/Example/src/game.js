@@ -38,7 +38,16 @@ export function createGame(canvas) {
   function update(dt) {
     game.frame++;
     player.update(dt, game);
-    for (const b of blocks) resolveAabb(player, b);
+    for (const b of game.blocks) b.update?.(dt);
+    for (const b of game.blocks) {
+      if (b.dead) continue;
+      const prevY = player.y;
+      const result = resolveAabb(player, b);
+      if (result === 'y' && player.y > prevY && b.onBumpFromBelow) {
+        b.onBumpFromBelow(player, game);
+      }
+    }
+    game.blocks = game.blocks.filter(b => !b.dead);
   }
 
   function render() {
@@ -50,7 +59,7 @@ export function createGame(canvas) {
     const dbg = ['left','right','jump','run','fire','confirm','pause']
       .filter(a => input.isHeld(a)).join(' ');
     ctx.fillText(`Input: ${dbg}`, 20, 60);
-    for (const b of blocks) b.render(ctx);
+    for (const b of game.blocks) b.render(ctx);
     player.render(ctx);
   }
 
