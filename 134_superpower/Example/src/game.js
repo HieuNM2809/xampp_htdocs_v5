@@ -1,4 +1,5 @@
 import { createInput } from './input.js';
+import { Player } from './entities/player.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -19,8 +20,12 @@ export function createGame(canvas) {
   const input = createInput();
   game.input = input;
 
+  const player = new Player(100, 300);
+  game.player = player;
+
   function update(dt) {
     game.frame++;
+    player.update(dt, game);
   }
 
   function render() {
@@ -32,6 +37,7 @@ export function createGame(canvas) {
     const dbg = ['left','right','jump','run','fire','confirm','pause']
       .filter(a => input.isHeld(a)).join(' ');
     ctx.fillText(`Input: ${dbg}`, 20, 60);
+    player.render(ctx);
   }
 
   function tick(now) {
