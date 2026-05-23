@@ -1,5 +1,10 @@
 import { fillRoundRect, fillEllipse } from '../renderer.js';
 
+const WALK_ACCEL = 600;
+const RUN_ACCEL  = 900;
+const WALK_MAX   = 180;
+const RUN_MAX    = 280;
+
 export const PLAYER_SIZES = {
   small: { w: 28, h: 32 },
   big:   { w: 32, h: 56 },
@@ -22,7 +27,19 @@ export class Player {
   getAABB() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
 
   update(dt, world) {
-    // Movement/jump logic added in Tasks 8-9.
+    const input = world.input;
+    const accel = input.isHeld('run') ? RUN_ACCEL : WALK_ACCEL;
+    const maxV  = input.isHeld('run') ? RUN_MAX   : WALK_MAX;
+
+    if (input.isHeld('left'))  { this.vx -= accel * dt; this.facing = -1; }
+    if (input.isHeld('right')) { this.vx += accel * dt; this.facing =  1; }
+    if (!input.isHeld('left') && !input.isHeld('right')) {
+      this.vx -= this.vx * Math.min(1, 8 * dt);
+      if (Math.abs(this.vx) < 1) this.vx = 0;
+    }
+    this.vx = Math.max(-maxV, Math.min(maxV, this.vx));
+
+    this.x += this.vx * dt;
   }
 
   render(ctx, camera) {
