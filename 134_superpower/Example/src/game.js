@@ -53,6 +53,7 @@ export function createGame(canvas) {
     game.fireballs = [];
     game.coinsInLevel = [];
     game.player = new Player(data.spawn.x, data.spawn.y);
+    game.levelComplete = false;
     camera.x = 0;
     camera.y = 0;
   }
@@ -80,6 +81,22 @@ export function createGame(canvas) {
     }
   };
 
+  function onFlagReached(flag) {
+    if (game.levelComplete) return;
+    game.levelComplete = true;
+    game.audio?.play?.('levelClear');
+    game.score = (game.score ?? 0) + 500;
+    setTimeout(() => {
+      const next = game.currentLevel + 1;
+      if (next < LEVEL_FILES.length) {
+        loadLevel(next);
+        game.levelComplete = false;
+      } else {
+        game.state = 'VICTORY';
+      }
+    }, 1500);
+  }
+
   function updateCamera() {
     if (!game.player) return;
     const cx = game.player.x + game.player.w / 2;
@@ -100,6 +117,12 @@ export function createGame(canvas) {
     for (const b of blocks) b.update?.(dt);
     for (const b of blocks) {
       if (b.dead) continue;
+      if (b.isTrigger) {
+        if (aabbOverlap(player.getAABB(), b.getAABB())) {
+          onFlagReached(b);
+        }
+        continue;
+      }
       const prevY = player.y;
       const result = resolveAabb(player, b);
       if (result === 'y' && player.y > prevY && b.onBumpFromBelow) {

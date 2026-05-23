@@ -123,6 +123,7 @@ export class Flag extends BaseBlock {
     ctx.closePath();
     ctx.fill();
   }
+  get isTrigger() { return true; }
 }
 
 export function createBlock(spec) {
