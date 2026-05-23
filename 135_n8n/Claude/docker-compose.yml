@@ -1,0 +1,25 @@
+# n8n local — SQLite mặc định, có pass ANTHROPIC_API_KEY vào container
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n-135-claude
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Asia/Ho_Chi_Minh}
+      - TZ=${TZ:-Asia/Ho_Chi_Minh}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
+      - N8N_SECURE_COOKIE=false
+      # Cho phép expression {{ $env.X }} đọc env trong node (mặc định false = cho phép)
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Key Claude (đặt trong .env hoặc shell trước khi up)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:

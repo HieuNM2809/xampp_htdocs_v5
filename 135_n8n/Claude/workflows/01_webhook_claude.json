@@ -1,0 +1,121 @@
+{
+  "name": "01 Webhook Claude",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "claude",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "c1a2b3c4-1111-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "135-claude-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 256,\n  \"messages\": [\n    {\"role\": \"user\", \"content\": {{ JSON.stringify($json.body.prompt || 'Xin chào, hãy tự giới thiệu trong 1 câu tiếng Việt.') }}}\n  ]\n}",
+        "options": {}
+      },
+      "id": "c1a2b3c4-2222-4000-8000-000000000002",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1a2b3c4-3333-4000-8000-000000000003",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "c1a2b3c4-4444-4000-8000-000000000004",
+              "name": "reply",
+              "value": "={{ $json.content[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "c1a2b3c4-5555-4000-8000-000000000005",
+              "name": "model",
+              "value": "={{ $json.model }}",
+              "type": "string"
+            },
+            {
+              "id": "c1a2b3c4-6666-4000-8000-000000000006",
+              "name": "usage",
+              "value": "={{ $json.usage }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1a2b3c4-7777-4000-8000-000000000007",
+      "name": "Build response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Build response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}

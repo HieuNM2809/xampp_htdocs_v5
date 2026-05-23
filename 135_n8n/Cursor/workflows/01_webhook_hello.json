@@ -1,0 +1,72 @@
+{
+  "name": "01 Webhook Hello",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hello",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "f1a2b3c4-1111-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "135-cursor-hello"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1a2b3c4-2222-4000-8000-000000000002",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "f1a2b3c4-3333-4000-8000-000000000003",
+              "name": "message",
+              "value": "=Xin chào, {{ $json.body.name || 'bạn' }}! (n8n demo 135)",
+              "type": "string"
+            },
+            {
+              "id": "f1a2b3c4-4444-4000-8000-000000000004",
+              "name": "received",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f1a2b3c4-5555-4000-8000-000000000005",
+      "name": "Build response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}
