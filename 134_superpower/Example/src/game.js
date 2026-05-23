@@ -5,6 +5,7 @@ import { Koopa } from './entities/koopa.js';
 import { resolveAabb, aabbOverlap } from './physics.js';
 import { createBlock } from './entities/block.js';
 import { clear } from './renderer.js';
+import { Coin, Mushroom, FireFlower, createItem } from './entities/item.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -47,12 +48,29 @@ export function createGame(canvas) {
       if (spec.type === 'koopa')  return new Koopa(spec.x, spec.y);
       throw new Error(`Unknown enemy ${spec.type}`);
     });
+    game.items = data.coins.map(c => new Coin(c.x, c.y));
     game.coinsInLevel = [];
     game.player = new Player(data.spawn.x, data.spawn.y);
     camera.x = 0;
     camera.y = 0;
   }
   game.loadLevel = loadLevel;
+
+  game.spawnFromQBlock = function(qblock) {
+    const content = qblock.contains;
+    const x = qblock.x + 2;
+    const y = qblock.y - 4;
+    if (content === 'coin') {
+      game.score = (game.score ?? 0) + 100;
+      game.coins = (game.coins ?? 0) + 1;
+      game.audio?.play?.('coin');
+    } else if (content === 'mushroom') {
+      const itemType = game.player.form === 'small' ? 'mushroom' : 'fireflower';
+      game.items.push(createItem({ type: itemType, x, y }));
+    } else if (content === 'fireflower') {
+      game.items.push(createItem({ type: 'fireflower', x, y }));
+    }
+  };
 
   function updateCamera() {
     if (!game.player) return;
@@ -167,6 +185,52 @@ export function createGame(canvas) {
     }
     // Filter only after dying animation complete (so flat-squish renders for 0.4s)
     game.enemies = game.enemies.filter(e => !e._dead || (e._dyingT ?? 0) > 0);
+
+    // Items update + collide with blocks (only Mushroom needs physics)
+    for (const it of game.items) it.update(dt);
+    for (const it of game.items) {
+      if (it._dead) continue;
+      if (!(it instanceof Mushroom)) continue;
+      for (const b of game.blocks) {
+        if (b.dead) continue;
+        const result = resolveAabb(it, b);
+        if (result === 'x') it.reverse();
+      }
+    }
+    // Items vs player
+    for (const it of game.items) {
+      if (it._dead) continue;
+      if (!aabbOverlap(player.getAABB(), it.getAABB())) continue;
+      if (it instanceof Coin) {
+        it.collect();
+        game.score = (game.score ?? 0) + 100;
+        game.coins = (game.coins ?? 0) + 1;
+        if ((game.coins ?? 0) >= 100) { game.coins -= 100; game.lives = (game.lives ?? 3) + 1; }
+        game.audio?.play?.('coin');
+      } else if (it instanceof Mushroom) {
+        it.collect();
+        if (player.form === 'small') {
+          player.form = 'big';
+          const s = PLAYER_SIZES.big;
+          player.y -= (s.h - player.h);
+          player.w = s.w; player.h = s.h;
+        }
+        game.score = (game.score ?? 0) + 1000;
+        game.audio?.play?.('powerup');
+      } else if (it instanceof FireFlower) {
+        it.collect();
+        const oldH = player.h;
+        player.form = 'fire';
+        const s = PLAYER_SIZES.fire;
+        if (player.h !== s.h) {
+          player.y -= (s.h - oldH);
+          player.w = s.w; player.h = s.h;
+        }
+        game.score = (game.score ?? 0) + 1000;
+        game.audio?.play?.('powerup');
+      }
+    }
+    game.items = game.items.filter(it => !it._dead);
   }
 
   function render() {
@@ -175,6 +239,7 @@ export function createGame(canvas) {
     ctx.save();
     ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
     for (const b of game.blocks) b.render(ctx);
+    for (const it of game.items) it.render(ctx);
     for (const e of game.enemies) e.render(ctx);
     game.player.render(ctx);
     ctx.restore();
