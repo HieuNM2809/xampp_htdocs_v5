@@ -1,3 +1,5 @@
+import { createInput } from './input.js';
+
 const FIXED_DT = 1 / 60;
 
 export function createGame(canvas) {
@@ -14,6 +16,9 @@ export function createGame(canvas) {
     _fpsCount: 0,
   };
 
+  const input = createInput();
+  game.input = input;
+
   function update(dt) {
     game.frame++;
   }
@@ -24,6 +29,9 @@ export function createGame(canvas) {
     ctx.fillStyle = '#fff';
     ctx.font = '20px monospace';
     ctx.fillText(`Frame ${game.frame}  FPS ${game.fps}`, 20, 30);
+    const dbg = ['left','right','jump','run','fire','confirm','pause']
+      .filter(a => input.isHeld(a)).join(' ');
+    ctx.fillText(`Input: ${dbg}`, 20, 60);
   }
 
   function tick(now) {
@@ -43,6 +51,7 @@ export function createGame(canvas) {
       game._fpsLast = now;
     }
 
+    input.endFrame();
     render();
     requestAnimationFrame(tick);
   }
