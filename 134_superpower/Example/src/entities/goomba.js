@@ -4,12 +4,15 @@ import { applyGravity } from '../physics.js';
 const SPEED = 60;
 
 export class Goomba {
-  constructor(x, y) {
+  constructor(x, y, opts = {}) {
     this.x = x; this.y = y;
     this.w = 28; this.h = 26;
     this.vx = -SPEED;
     this.vy = 0;
     this.onGround = false;
+    this.flying = opts.flying ?? false;
+    this._baseY = y;
+    this._t = 0;
     this._dead = false;
     this._dyingT = 0;
   }
@@ -29,10 +32,16 @@ export class Goomba {
       this._dyingT -= dt;
       return;
     }
-    applyGravity(this, dt);
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    this.onGround = false;
+    this._t += dt;
+    if (this.flying) {
+      this.y = this._baseY + Math.sin(this._t * 2.5) * 24;
+      this.x += this.vx * dt;
+    } else {
+      applyGravity(this, dt);
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      this.onGround = false;
+    }
   }
 
   render(ctx) {
@@ -47,5 +56,10 @@ export class Goomba {
     fillCircle(ctx, cx + 7, this.y + 9, 3, '#fff', '#000', 1);
     fillEllipse(ctx, this.x + 5, this.y + this.h, 4, 4, '#5d2906', '#3d1d05', 1);
     fillEllipse(ctx, this.x + this.w - 5, this.y + this.h, 4, 4, '#5d2906', '#3d1d05', 1);
+    if (this.flying && !this._dead) {
+      const wingY = this.y + 6;
+      fillEllipse(ctx, this.x - 4, wingY, 6, 4, '#fff', '#666', 1);
+      fillEllipse(ctx, this.x + this.w + 4, wingY, 6, 4, '#fff', '#666', 1);
+    }
   }
 }

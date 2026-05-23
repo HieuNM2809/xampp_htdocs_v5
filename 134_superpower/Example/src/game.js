@@ -61,7 +61,7 @@ export function createGame(canvas) {
     game.levelName = data.name;
     game.blocks = data.blocks.map(createBlock);
     game.enemies = data.enemies.map(spec => {
-      if (spec.type === 'goomba') return new Goomba(spec.x, spec.y);
+      if (spec.type === 'goomba') return new Goomba(spec.x, spec.y, { flying: !!spec.flying });
       if (spec.type === 'koopa')  return new Koopa(spec.x, spec.y);
       throw new Error(`Unknown enemy ${spec.type}`);
     });
