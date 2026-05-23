@@ -51,11 +51,69 @@ export function createAudio() {
     levelClear: () => { [392,494,587,784,988,1175].forEach((f, i) => setTimeout(() => tone(f, 0.12, 'square', 0.12), i * 130)); },
   };
 
+  const MUSIC = {
+    overworld: { bpm: 200, notes: [
+      [659, 0.25], [659, 0.25], [0, 0.25], [659, 0.25],
+      [0, 0.25], [523, 0.25], [659, 0.25], [0, 0.25],
+      [784, 0.5],  [0, 0.5],   [392, 0.5], [0, 0.5],
+    ]},
+    underground: { bpm: 140, notes: [
+      [196, 0.5], [220, 0.5], [196, 0.5], [165, 0.5],
+      [196, 0.5], [165, 0.5], [147, 0.5], [165, 0.5],
+    ]},
+    castle: { bpm: 160, notes: [
+      [220, 0.5], [261, 0.5], [220, 0.5], [196, 0.5],
+      [165, 0.5], [196, 0.5], [220, 0.5], [261, 0.5],
+    ]},
+  };
+
+  function startMusicImpl(track) {
+    if (muted) return null;
+    const c = ensureCtx();
+    const data = MUSIC[track];
+    if (!data) return null;
+    const beat = 60 / data.bpm;
+    let stopped = false;
+    let i = 0;
+    let t = c.currentTime + 0.05;
+
+    function schedule() {
+      if (stopped) return;
+      while (t < c.currentTime + 1) {
+        const [f, dur] = data.notes[i % data.notes.length];
+        if (f > 0) {
+          const osc = c.createOscillator();
+          const g = c.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = f;
+          g.gain.value = 0.06;
+          g.gain.setValueAtTime(0.06, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + dur * beat * 0.95);
+          osc.connect(g).connect(c.destination);
+          osc.start(t); osc.stop(t + dur * beat);
+        }
+        t += dur * beat;
+        i++;
+      }
+      setTimeout(schedule, 200);
+    }
+    schedule();
+    return () => { stopped = true; };
+  }
+
   return {
     unlock() { ensureCtx(); },
     play(name) { SFX[name]?.(); },
-    startMusic(name) { /* full impl added in Task 24 */ musicTrack = name; },
-    stopMusic() { if (musicStop) musicStop(); musicTrack = null; },
+    startMusic(name) {
+      if (musicStop) musicStop();
+      musicStop = startMusicImpl(name);
+      musicTrack = name;
+    },
+    stopMusic() {
+      if (musicStop) musicStop();
+      musicStop = null;
+      musicTrack = null;
+    },
     setMuted(v) { muted = v; if (v) this.stopMusic(); },
     get isMuted() { return muted; },
   };

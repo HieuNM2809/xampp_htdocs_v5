@@ -51,6 +51,7 @@ export function createGame(canvas) {
     game.worldWidth = data.width;
     game.worldHeight = data.height;
     game.background = data.background;
+    audio.startMusic(data.music);
     game.levelName = data.name;
     game.blocks = data.blocks.map(createBlock);
     game.enemies = data.enemies.map(spec => {
@@ -101,6 +102,7 @@ export function createGame(canvas) {
         loadLevel(next);
         game.levelComplete = false;
       } else {
+        audio.stopMusic();
         if (game.score > game.hiScore) game.hiScore = game.score;
         game.state = 'VICTORY';
       }
@@ -300,6 +302,7 @@ export function createGame(canvas) {
 
     // Player death (will be enhanced in Task 32 with delay)
     if (game.player && game.player._dead) {
+      audio.stopMusic();
       game.lives -= 1;
       if (game.lives <= 0) {
         if (game.score > game.hiScore) game.hiScore = game.score;
@@ -378,16 +381,17 @@ export function createGame(canvas) {
     }
     if (game.state === 'PLAYING' && inp.wasPressed('pause')) game.state = 'PAUSED';
     else if (game.state === 'PAUSED' && inp.wasPressed('pause')) game.state = 'PLAYING';
-    if (game.state === 'PAUSED' && inp.wasPressed('quit')) game.state = 'MENU';
+    if (game.state === 'PAUSED' && inp.wasPressed('quit')) { audio.stopMusic(); game.state = 'MENU'; }
     if (game.state === 'GAME_OVER' && inp.wasPressed('retry')) {
       game.score = 0; game.coins = 0; game.lives = 3;
       game.state = 'PLAYING';
       loadLevel(0);
     }
     if ((game.state === 'GAME_OVER' || game.state === 'VICTORY') && inp.wasPressed('confirm')) {
+      audio.stopMusic();
       game.state = 'MENU';
     }
-    if (game.state === 'GAME_OVER' && inp.wasPressed('quit')) game.state = 'MENU';
+    if (game.state === 'GAME_OVER' && inp.wasPressed('quit')) { audio.stopMusic(); game.state = 'MENU'; }
 
     while (game._acc >= FIXED_DT) {
       update(FIXED_DT);
