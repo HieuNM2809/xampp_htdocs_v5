@@ -23,9 +23,9 @@ export default {
   ],
   enemies: [
     { type: 'goomba', x: 500,  y: 388 },
-    { type: 'goomba', x: 800,  y: 388 },
+    { type: 'koopa',  x: 800,  y: 380 },
     { type: 'goomba', x: 1500, y: 354 },
-    { type: 'goomba', x: 2200, y: 388 },
+    { type: 'koopa',  x: 2200, y: 380 },
   ],
   coins: [],
 };

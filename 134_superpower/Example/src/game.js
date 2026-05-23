@@ -1,6 +1,7 @@
 import { createInput } from './input.js';
 import { Player, PLAYER_SIZES } from './entities/player.js';
 import { Goomba } from './entities/goomba.js';
+import { Koopa } from './entities/koopa.js';
 import { resolveAabb, aabbOverlap } from './physics.js';
 import { createBlock } from './entities/block.js';
 import { clear } from './renderer.js';
@@ -43,6 +44,7 @@ export function createGame(canvas) {
     game.blocks = data.blocks.map(createBlock);
     game.enemies = data.enemies.map(spec => {
       if (spec.type === 'goomba') return new Goomba(spec.x, spec.y);
+      if (spec.type === 'koopa')  return new Koopa(spec.x, spec.y);
       throw new Error(`Unknown enemy ${spec.type}`);
     });
     game.coinsInLevel = [];
@@ -110,12 +112,57 @@ export function createGame(canvas) {
       if (e._dead) continue;
       if (!aabbOverlap(player.getAABB(), e.getAABB())) continue;
       const stomped = player.vy > 0 && player.y + player.h - 8 < e.y;
-      if (stomped) {
-        e.stomped();
-        player.vy = -260;
-        game.score = (game.score ?? 0) + 100;
+
+      if (e instanceof Koopa) {
+        if (e.phase === 'walk') {
+          if (stomped) {
+            e.stomped();
+            player.vy = -260;
+            game.score = (game.score ?? 0) + 100;
+          } else {
+            onPlayerHit(player, game);
+          }
+        } else if (e.phase === 'shell') {
+          if (stomped) {
+            player.vy = -260;
+          } else {
+            const dir = (player.x < e.x) ? 1 : -1;
+            e.kick(dir);
+            player.x = dir === 1 ? e.x - player.w - 1 : e.x + e.w + 1;
+          }
+        } else if (e.phase === 'sliding') {
+          if (stomped) {
+            e.stomped();
+            player.vy = -260;
+          } else {
+            onPlayerHit(player, game);
+          }
+        }
       } else {
-        onPlayerHit(player, game);
+        // Goomba branch (unchanged)
+        if (stomped) {
+          e.stomped();
+          player.vy = -260;
+          game.score = (game.score ?? 0) + 100;
+        } else {
+          onPlayerHit(player, game);
+        }
+      }
+    }
+
+    // Sliding shell kills other enemies in its path
+    for (const e of game.enemies) {
+      if (e instanceof Koopa && e.phase === 'sliding') {
+        for (const other of game.enemies) {
+          if (other === e || other._dead) continue;
+          if (aabbOverlap(e.getAABB(), other.getAABB())) {
+            const isOtherShell = other instanceof Koopa && other.phase === 'shell';
+            if (!isOtherShell && typeof other.stomped === 'function') {
+              other.stomped();
+              if (other instanceof Goomba) game.score = (game.score ?? 0) + 100;
+            }
+          }
+        }
       }
     }
     // Filter only after dying animation complete (so flat-squish renders for 0.4s)
