@@ -22,7 +22,7 @@ export class Ground extends BaseBlock {
 }
 
 export class Brick extends BaseBlock {
-  constructor(x, y) { super(x, y, TILE, TILE); this._bumpT = 0; }
+  constructor(x, y) { super(x, y, TILE, TILE); this._bumpT = 0; this._gradient = null; }
   onBumpFromBelow(player, world) {
     if (player.form === 'small') {
       // small Mario bounces brick — no break
@@ -42,10 +42,12 @@ export class Brick extends BaseBlock {
     const offset = this._bumpT > 0 ? -6 * Math.sin(this._bumpT / 0.15 * Math.PI) : 0;
     ctx.save();
     ctx.translate(0, offset);
-    const g = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
-    g.addColorStop(0, '#c0392b');
-    g.addColorStop(1, '#922b21');
-    fillRoundRect(ctx, this.x, this.y, this.w, this.h, g, '#5a1a1a', 8);
+    if (!this._gradient) {
+      this._gradient = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
+      this._gradient.addColorStop(0, '#c0392b');
+      this._gradient.addColorStop(1, '#922b21');
+    }
+    fillRoundRect(ctx, this.x, this.y, this.w, this.h, this._gradient, '#5a1a1a', 8);
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -62,6 +64,8 @@ export class QBlock extends BaseBlock {
     this.contains = contains;
     this.used = false;
     this._bumpT = 0;
+    this._gradientActive = null;
+    this._gradientUsed = null;
   }
   onBumpFromBelow(player, world) {
     if (this.used) return;
@@ -78,12 +82,17 @@ export class QBlock extends BaseBlock {
     const offset = this._bumpT > 0 ? -6 * Math.sin(this._bumpT / 0.15 * Math.PI) : 0;
     ctx.save();
     ctx.translate(0, offset);
-    const g = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
-    if (this.used) {
-      g.addColorStop(0, '#8b6914'); g.addColorStop(1, '#5a4406');
-    } else {
-      g.addColorStop(0, '#f39c12'); g.addColorStop(1, '#d68910');
+    if (!this._gradientActive) {
+      this._gradientActive = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
+      this._gradientActive.addColorStop(0, '#f39c12');
+      this._gradientActive.addColorStop(1, '#d68910');
     }
+    if (!this._gradientUsed) {
+      this._gradientUsed = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
+      this._gradientUsed.addColorStop(0, '#8b6914');
+      this._gradientUsed.addColorStop(1, '#5a4406');
+    }
+    const g = this.used ? this._gradientUsed : this._gradientActive;
     fillRoundRect(ctx, this.x, this.y, this.w, this.h, g, '#7d5f06', 8);
     if (!this.used) {
       ctx.fillStyle = '#fff';
@@ -97,16 +106,24 @@ export class QBlock extends BaseBlock {
 }
 
 export class Pipe extends BaseBlock {
-  constructor(x, y, h = 64) { super(x, y, TILE * 1.5, h); }
+  constructor(x, y, h = 64) {
+    super(x, y, TILE * 1.5, h);
+    this._gradientBody = null;
+    this._gradientCap = null;
+  }
   render(ctx) {
-    const g = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
-    g.addColorStop(0, '#27ae60');
-    g.addColorStop(1, '#145a32');
-    fillRoundRect(ctx, this.x, this.y + 12, this.w, this.h - 12, g, '#0e3d22', 6);
-    const g2 = ctx.createLinearGradient(0, this.y, 0, this.y + 14);
-    g2.addColorStop(0, '#2ecc71');
-    g2.addColorStop(1, '#196f3d');
-    fillRoundRect(ctx, this.x - 4, this.y, this.w + 8, 14, g2, '#0e3d22', 6);
+    if (!this._gradientBody) {
+      this._gradientBody = ctx.createLinearGradient(0, this.y, 0, this.y + this.h);
+      this._gradientBody.addColorStop(0, '#27ae60');
+      this._gradientBody.addColorStop(1, '#145a32');
+    }
+    fillRoundRect(ctx, this.x, this.y + 12, this.w, this.h - 12, this._gradientBody, '#0e3d22', 6);
+    if (!this._gradientCap) {
+      this._gradientCap = ctx.createLinearGradient(0, this.y, 0, this.y + 14);
+      this._gradientCap.addColorStop(0, '#2ecc71');
+      this._gradientCap.addColorStop(1, '#196f3d');
+    }
+    fillRoundRect(ctx, this.x - 4, this.y, this.w + 8, 14, this._gradientCap, '#0e3d22', 6);
   }
 }
 

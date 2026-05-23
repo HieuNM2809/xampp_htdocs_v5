@@ -7,6 +7,7 @@ export class Coin {
     this.w = 20; this.h = 24;
     this._dead = false;
     this._spinT = 0;
+    this._gradient = null;
   }
   get dead() { return this._dead; }
   getAABB() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
@@ -15,10 +16,12 @@ export class Coin {
     const sx = Math.abs(Math.sin(this._spinT * 4)) * 0.5 + 0.5;
     const cx = this.x + this.w / 2;
     const cy = this.y + this.h / 2;
-    const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, this.w / 2);
-    g.addColorStop(0, '#ffe27a');
-    g.addColorStop(1, '#f39c12');
-    fillEllipse(ctx, cx, cy, (this.w / 2) * sx, this.h / 2, g, '#b8770a', 2);
+    if (!this._gradient) {
+      this._gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, this.w / 2);
+      this._gradient.addColorStop(0, '#ffe27a');
+      this._gradient.addColorStop(1, '#f39c12');
+    }
+    fillEllipse(ctx, cx, cy, (this.w / 2) * sx, this.h / 2, this._gradient, '#b8770a', 2);
   }
   collect() { this._dead = true; }
 }
