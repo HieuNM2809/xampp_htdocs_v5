@@ -1,0 +1,87 @@
+<h2>Phần 1/7 — Cấu trúc file</h2>
+<p class="subtitle">Mỗi module một trách nhiệm, ESM imports rõ ràng</p>
+
+<style>
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+  .arch-box {
+    border: 2px solid #444;
+    border-radius: 6px;
+    padding: 0.7rem;
+    background: #fff;
+  }
+  .arch-box h4 { margin: 0 0 0.3rem; font-size: 0.95rem; color: #c00; }
+  .arch-box p { margin: 0; font-size: 0.8rem; color: #444; line-height: 1.3 }
+  .arch-box code { background: #fffacd; padding: 1px 4px; font-size: 0.75rem; border-radius: 2px }
+  .layer-label {
+    grid-column: 1 / -1;
+    font-weight: bold;
+    color: #555;
+    border-bottom: 1px solid #ccc;
+    padding-top: 0.5rem;
+    margin-top: 0.3rem;
+  }
+  .file-tree {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .file-tree .dir { color: #569cd6 }
+  .file-tree .file { color: #d4d4d4 }
+  .file-tree .comment { color: #6a9955; font-style: italic }
+</style>
+
+<div class="section">
+  <h3>📁 File tree</h3>
+  <div class="file-tree">
+<span class="dir">Example/</span>
+├── <span class="file">index.html</span>           <span class="comment"># &lt;canvas&gt; + nạp main.js</span>
+├── <span class="file">style.css</span>            <span class="comment"># reset, layout canvas full screen</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="file">main.js</span>          <span class="comment"># entry — khởi tạo Game, bind input</span>
+│   ├── <span class="file">game.js</span>          <span class="comment"># state machine + main loop (rAF)</span>
+│   ├── <span class="file">input.js</span>         <span class="comment"># keyboard → action state</span>
+│   ├── <span class="file">renderer.js</span>      <span class="comment"># camera, primitive draw helpers</span>
+│   ├── <span class="file">physics.js</span>       <span class="comment"># AABB collision, gravity, friction</span>
+│   ├── <span class="file">audio.js</span>         <span class="comment"># WebAudio: SFX + nhạc nền</span>
+│   ├── <span class="file">storage.js</span>       <span class="comment"># localStorage wrapper</span>
+│   ├── <span class="file">ui.js</span>            <span class="comment"># HUD, menu, pause, game over</span>
+│   ├── <span class="dir">entities/</span>
+│   │   ├── <span class="file">player.js</span>    <span class="comment"># Mario (small / big / fire)</span>
+│   │   ├── <span class="file">goomba.js</span>    <span class="comment"># địch đi qua đi lại</span>
+│   │   ├── <span class="file">koopa.js</span>     <span class="comment"># rùa, đạp thành mai</span>
+│   │   ├── <span class="file">block.js</span>     <span class="comment"># ground, brick, ?-block</span>
+│   │   ├── <span class="file">item.js</span>      <span class="comment"># coin, mushroom, fire flower</span>
+│   │   ├── <span class="file">fireball.js</span>  <span class="comment"># projectile của Mario</span>
+│   │   └── <span class="file">boss.js</span>      <span class="comment"># Bowser-style cuối game</span>
+│   └── <span class="dir">levels/</span>
+│       ├── <span class="file">level1.js</span>    <span class="comment"># dữ liệu màn 1 (overworld)</span>
+│       ├── <span class="file">level2.js</span>    <span class="comment"># dữ liệu màn 2 (underground)</span>
+│       ├── <span class="file">level3.js</span>    <span class="comment"># dữ liệu màn 3 (sky)</span>
+│       └── <span class="file">level4.js</span>    <span class="comment"># dữ liệu màn 4 (castle + boss)</span>
+└── <span class="file">README.md</span>           <span class="comment"># hướng dẫn chạy</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔀 Luồng phụ thuộc</h3>
+  <p style="font-size:0.9rem">main → game → { input, renderer, physics, audio, ui, storage, entities, levels }</p>
+  <p style="font-size:0.9rem">Các module thấp tầng (input, renderer, physics, audio, storage) <strong>không import lẫn nhau</strong> — chỉ phơi API thuần. game.js là chỗ phối hợp tất cả.</p>
+</div>
+
+<div class="section">
+  <h3>📏 Quy tắc kích thước</h3>
+  <ul>
+    <li>Mỗi file mục tiêu &lt;300 dòng</li>
+    <li>level data thuần JSON-ish (mảng objects), không có logic</li>
+    <li>entities tự render và tự update — không phụ thuộc renderer</li>
+  </ul>
+</div>

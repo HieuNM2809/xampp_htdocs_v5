@@ -1,0 +1,124 @@
+<h2>Phần 7/7 — Testing approach</h2>
+<p class="subtitle">Pragmatic — chia 3 lớp: tự động, debug tools, playtest tay</p>
+
+<style>
+  .test-layers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .layer {
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 0.8rem;
+    background: #fff;
+  }
+  .layer h4 {
+    margin: 0 0 0.4rem;
+    color: #c00;
+    font-size: 0.95rem;
+  }
+  .layer ul { padding-left: 1.2rem; font-size: 0.82rem; line-height: 1.45; margin: 0 }
+  .layer .scope {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #fffacd;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    color: #5a4a06;
+    margin-bottom: 0.5rem;
+  }
+  .code-box {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 0.9rem; border-radius: 6px;
+    font-family: monospace; font-size: 0.78rem;
+    line-height: 1.5; white-space: pre; overflow-x: auto;
+  }
+  .code-box .kw { color: #569cd6 }
+  .code-box .str { color: #ce9178 }
+  .code-box .num { color: #b5cea8 }
+  .code-box .cm { color: #6a9955 }
+  .code-box .fn { color: #dcdcaa }
+</style>
+
+<div class="test-layers">
+  <div class="layer">
+    <span class="scope">1. Unit tests</span>
+    <h4>physics + entity logic</h4>
+    <ul>
+      <li>Vitest (chạy nhanh, ESM ngon)</li>
+      <li>Test AABB collision: trên/dưới/trái/phải</li>
+      <li>Test variable-jump physics</li>
+      <li>Test state transition Player: small→big→fire→big→small→dead</li>
+      <li>Test Koopa: walk → stomp → shell → kicked</li>
+      <li>~15-25 test, không cần canvas/DOM</li>
+    </ul>
+  </div>
+
+  <div class="layer">
+    <span class="scope">2. Debug overlay</span>
+    <h4>F1/F2/F3 trong khi chơi</h4>
+    <ul>
+      <li><strong>F1</strong>: bật/tắt vẽ AABB của mọi entity</li>
+      <li><strong>F2</strong>: FPS counter, số entity, vị trí player</li>
+      <li><strong>F3</strong>: nhảy nhanh level (cycle 1→2→3→4)</li>
+      <li><strong>F4</strong>: bất tử (god mode) — để playtest</li>
+      <li>Phát hiện ngay collision lệch, performance chậm</li>
+    </ul>
+  </div>
+
+  <div class="layer">
+    <span class="scope">3. Playtest checklist</span>
+    <h4>Tay người chơi</h4>
+    <ul>
+      <li>Hoàn thành mỗi màn từ đầu → cờ</li>
+      <li>Tất cả block tương tác đúng</li>
+      <li>Mọi power-up nhặt được</li>
+      <li>Boss đánh bại được, có thua được</li>
+      <li>Pause / resume / quit / retry không bug</li>
+      <li>HUD đúng, score lưu localStorage</li>
+      <li>Audio không bị stuck khi mute/unmute</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🧪 Ví dụ unit test (physics)</h3>
+  <div class="code-box"><span class="cm">// test/physics.test.js</span>
+<span class="kw">import</span> { describe, it, expect } <span class="kw">from</span> <span class="str">'vitest'</span>;
+<span class="kw">import</span> { resolveCollision } <span class="kw">from</span> <span class="str">'../src/physics.js'</span>;
+
+<span class="fn">describe</span>(<span class="str">'AABB collision'</span>, () => {
+  <span class="fn">it</span>(<span class="str">'player rơi xuống ground → đứng yên trên ground'</span>, () => {
+    <span class="kw">const</span> player = { x: <span class="num">100</span>, y: <span class="num">200</span>, w: <span class="num">32</span>, h: <span class="num">32</span>, vy: <span class="num">300</span> };
+    <span class="kw">const</span> ground = { x: <span class="num">0</span>, y: <span class="num">240</span>, w: <span class="num">500</span>, h: <span class="num">64</span> };
+    <span class="fn">resolveCollision</span>(player, ground, <span class="num">0.016</span>);
+    <span class="fn">expect</span>(player.y + player.h).toBe(<span class="num">240</span>);
+    <span class="fn">expect</span>(player.vy).toBe(<span class="num">0</span>);
+    <span class="fn">expect</span>(player.onGround).toBe(<span class="kw">true</span>);
+  });
+
+  <span class="fn">it</span>(<span class="str">'player chạy ngang vào tường → dừng, vẫn rơi'</span>, () => { ... });
+});</div>
+</div>
+
+<div class="section">
+  <h3>⚙️ Setup</h3>
+  <ul style="font-size:0.85rem">
+    <li><code>package.json</code> với dev-dep <code>vitest</code> (~13MB) — chạy <code>npm test</code></li>
+    <li>Game chính <strong>không cần</strong> npm install — chỉ test cần</li>
+    <li>Không có e2e test (Playwright/Cypress) — overkill cho dự án học</li>
+    <li>CI không cần — đây là project học cá nhân</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>📋 Phạm vi YAGNI</h3>
+  <ul style="font-size:0.85rem">
+    <li>❌ Không test render (vẽ Canvas pixel-perfect khó test, ROI thấp)</li>
+    <li>❌ Không test audio (chỉ test khi unmute SFX có gọi đúng, không test sóng)</li>
+    <li>❌ Không snapshot test</li>
+    <li>✅ Test logic thuần (physics, entity state, collision resolution) — đáng tiền nhất</li>
+  </ul>
+</div>

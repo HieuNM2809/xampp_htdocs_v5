@@ -1,0 +1,143 @@
+<h2>Phần 3/7 — Entities</h2>
+<p class="subtitle">Mỗi entity tự có update() + render() + getAABB()</p>
+
+<style>
+  .entity-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+  .ent {
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 0.8rem;
+    background: #fff;
+  }
+  .ent h4 { margin: 0 0 0.4rem; color: #c00; display:flex; align-items:center; gap: 0.5rem }
+  .ent .icon {
+    width: 32px; height: 32px;
+    display:inline-block; border-radius:4px;
+    background: var(--c, #ccc);
+    flex-shrink: 0;
+  }
+  .ent p { margin: 0.2rem 0; font-size: 0.85rem; color: #444; line-height: 1.4 }
+  .ent code { background: #fffacd; padding:1px 4px; font-size:0.75rem; border-radius:2px }
+
+  .interface-box {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 0.9rem; border-radius: 6px;
+    font-family: monospace; font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .interface-box .kw { color: #569cd6 }
+  .interface-box .cm { color: #6a9955 }
+  .interface-box .fn { color: #dcdcaa }
+
+  .player-states {
+    display: flex; gap: 1rem; align-items: center;
+    justify-content: center; margin: 0.5rem 0;
+  }
+  .ps {
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  .ps .av {
+    width: 40px; height: 50px;
+    margin: 0 auto 0.3rem;
+    border-radius: 50% 50% 30% 30%;
+  }
+</style>
+
+<div class="section">
+  <h3>📐 Interface chung của entity</h3>
+  <div class="interface-box"><span class="cm">// Mỗi entity là một class với 4 method này</span>
+<span class="kw">class</span> Entity {
+  <span class="fn">constructor</span>(x, y) { ... }
+  <span class="fn">update</span>(dt, world) { <span class="cm">// physics, AI, animation</span> }
+  <span class="fn">render</span>(ctx, camera) { <span class="cm">// vẽ lên canvas</span> }
+  <span class="fn">getAABB</span>()         { <span class="kw">return</span> { x, y, w, h } }
+  <span class="fn">onCollide</span>(other)  { <span class="cm">// xử lý va chạm</span> }
+  <span class="kw">get</span> dead()         { <span class="kw">return</span> <span class="kw">this</span>._dead }
+}</div>
+  <p style="font-size:0.85rem;color:#666">game.js loop qua mảng <code>entities</code>: gọi <code>update</code>, kiểm tra collision (AABB), gọi <code>onCollide</code>, lọc bỏ <code>dead</code>, rồi gọi <code>render</code>.</p>
+</div>
+
+<div class="section">
+  <h3>🦸 Player (Mario) — 3 hình thái</h3>
+  <div class="player-states">
+    <div class="ps">
+      <div class="av" style="background:linear-gradient(transparent 0 15px,#e74c3c 15px 35px,#3498db 35px 50px); border:2px solid #333"></div>
+      Small Mario<br/><small style="color:#666">1 hit = chết</small>
+    </div>
+    <div class="ps" style="font-size:1.5rem">🍄 →</div>
+    <div class="ps">
+      <div class="av" style="background:linear-gradient(transparent 0 18px,#e74c3c 18px 42px,#3498db 42px 60px); border:2px solid #333; width:48px;height:60px"></div>
+      Big Mario<br/><small style="color:#666">1 hit → small</small>
+    </div>
+    <div class="ps" style="font-size:1.5rem">🌸 →</div>
+    <div class="ps">
+      <div class="av" style="background:linear-gradient(transparent 0 18px,#fff 18px 42px,#e74c3c 42px 60px); border:2px solid #c00; width:48px;height:60px"></div>
+      Fire Mario<br/><small style="color:#666">bắn fireball</small>
+    </div>
+  </div>
+  <ul style="font-size:0.85rem">
+    <li><code>state</code>: 'small' | 'big' | 'fire'. Khi bị hit: fire→big→small→chết</li>
+    <li>Sau khi bị hit, bất tử 1.5s (nhấp nháy)</li>
+    <li>Press X (hoặc J) → bắn fireball (chỉ khi state='fire', tối đa 2 fireball cùng lúc)</li>
+    <li>Nhảy: ấn lâu nhảy cao hơn (variable-height jump)</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>👾 Enemies & Items</h3>
+  <div class="entity-grid">
+    <div class="ent">
+      <h4><span class="icon" style="--c:#8b4513;border-radius:50% 50% 20% 20%"></span> Goomba</h4>
+      <p>Đi qua lại ngang, đổi chiều khi gặp tường/vực. Đạp lên → chết. Va vào sườn → mất 1 hit của Mario.</p>
+    </div>
+    <div class="ent">
+      <h4><span class="icon" style="--c:#27ae60;border-radius:50% 50% 30% 30%"></span> Koopa</h4>
+      <p>Như Goomba nhưng đạp lần 1 → chui vào mai (entity mới: KoopaShell), đạp/đá vào mai → mai trượt và giết các địch khác trên đường.</p>
+    </div>
+    <div class="ent">
+      <h4><span class="icon" style="--c:#fdcb6e;border-radius:50%"></span> Coin</h4>
+      <p>Static, chạm vào → +100 điểm + SFX. Đủ 100 coin → +1 mạng.</p>
+    </div>
+    <div class="ent">
+      <h4><span class="icon" style="--c:#e74c3c;border-radius:50% 50% 30% 30%"></span> Mushroom</h4>
+      <p>Bật ra từ ?-block, di chuyển ngang (giống Goomba). Chạm → small→big.</p>
+    </div>
+    <div class="ent">
+      <h4><span class="icon" style="--c:#fd79a8;border-radius:50%"></span> Fire Flower</h4>
+      <p>Bật ra từ ?-block, đứng yên. Chạm → big→fire (small→fire nếu đang small).</p>
+    </div>
+    <div class="ent">
+      <h4><span class="icon" style="--c:#e17055;border-radius:50%"></span> Fireball</h4>
+      <p>Projectile Mario bắn. Nẩy mặt đất 2 lần rồi biến mất. Va địch → địch chết.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🧱 Blocks (entity tĩnh)</h3>
+  <ul style="font-size:0.85rem">
+    <li><strong>Ground</strong> — không tương tác, chỉ chặn</li>
+    <li><strong>Brick</strong> — Big/Fire Mario đánh từ dưới → vỡ. Small Mario → bật lại</li>
+    <li><strong>?-block</strong> — đánh từ dưới → bật coin / mushroom / fire flower (định nghĩa trong level data)</li>
+    <li><strong>Pipe</strong> — chặn, có thể đứng lên, decorative</li>
+    <li><strong>Flag</strong> — chạm → hoàn thành level</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>👹 Boss (cuối Level 4)</h3>
+  <ul style="font-size:0.85rem">
+    <li>Có HP = 5</li>
+    <li>Pattern: đi qua lại, thỉnh thoảng nhảy, thỉnh thoảng phun fireball ngang</li>
+    <li>Chỉ chịu sát thương từ fireball của Mario (không đạp được)</li>
+    <li>Hết HP → VICTORY state, lưu high score</li>
+  </ul>
+</div>

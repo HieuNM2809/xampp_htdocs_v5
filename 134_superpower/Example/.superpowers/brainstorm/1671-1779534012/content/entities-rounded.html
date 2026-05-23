@@ -1,0 +1,435 @@
+<h2>Entities — phiên bản bo góc mềm</h2>
+<p class="subtitle">Hình tròn / hình thuôn mềm mại, không có cạnh sắc</p>
+
+<style>
+  .demo-stage {
+    background: linear-gradient(180deg, #87ceeb 0 70%, #6ee06e 70% 88%, #c39456 88%);
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 1.5rem 1rem 0;
+    margin: 1rem 0;
+    min-height: 200px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    gap: 1rem;
+    overflow: hidden;
+  }
+  .ent-card {
+    text-align: center;
+    flex: 0 0 auto;
+  }
+  .ent-card .label {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  }
+
+  /* MARIO — small, hình thuôn dài tròn, mũ tròn */
+  .mario-small {
+    width: 36px; height: 50px;
+    position: relative;
+    margin: 0 auto;
+  }
+  .mario-small .head {
+    position: absolute; top: 0; left: 4px;
+    width: 28px; height: 22px;
+    background: #ffd5b0;
+    border-radius: 50% 50% 45% 45%;
+    border: 2px solid #5a2a0a;
+  }
+  .mario-small .hat {
+    position: absolute; top: -2px; left: 2px;
+    width: 32px; height: 14px;
+    background: #e74c3c;
+    border-radius: 50% 50% 30% 30%;
+    border: 2px solid #5a2a0a;
+  }
+  .mario-small .body {
+    position: absolute; top: 22px; left: 2px;
+    width: 32px; height: 28px;
+    background: #3498db;
+    border-radius: 35% 35% 50% 50%;
+    border: 2px solid #142850;
+  }
+
+  /* MARIO BIG — tỉ lệ lớn hơn, vẫn tròn mềm */
+  .mario-big {
+    width: 44px; height: 70px;
+    position: relative;
+    margin: 0 auto;
+  }
+  .mario-big .head {
+    position: absolute; top: 0; left: 6px;
+    width: 32px; height: 26px;
+    background: #ffd5b0;
+    border-radius: 50% 50% 45% 45%;
+    border: 2px solid #5a2a0a;
+  }
+  .mario-big .hat {
+    position: absolute; top: -3px; left: 3px;
+    width: 38px; height: 16px;
+    background: #e74c3c;
+    border-radius: 50% 50% 30% 30%;
+    border: 2px solid #5a2a0a;
+  }
+  .mario-big .body {
+    position: absolute; top: 26px; left: 2px;
+    width: 40px; height: 44px;
+    background: #3498db;
+    border-radius: 40% 40% 50% 50%;
+    border: 2px solid #142850;
+  }
+
+  /* MARIO FIRE — đảo màu */
+  .mario-fire .hat { background: #fff; }
+  .mario-fire .body { background: #e74c3c; border-color: #5a0e0e }
+
+  /* GOOMBA — tròn như cái nấm úp ngược */
+  .goomba {
+    width: 48px; height: 42px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .goomba .cap {
+    width: 48px; height: 30px;
+    background: #8b4513;
+    border-radius: 50% 50% 30% 30%;
+    border: 2px solid #3d1d05;
+  }
+  .goomba .foot {
+    position: absolute; bottom: 0;
+    width: 14px; height: 10px;
+    background: #5d2906;
+    border-radius: 50%;
+    border: 2px solid #3d1d05;
+  }
+  .goomba .foot.left { left: 4px }
+  .goomba .foot.right { right: 4px }
+  .goomba .eye {
+    position: absolute; top: 10px;
+    width: 8px; height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    border: 1px solid #000;
+  }
+  .goomba .eye.left { left: 10px }
+  .goomba .eye.right { right: 10px }
+
+  /* KOOPA — hình tròn elip, đầu nhỏ, mai */
+  .koopa {
+    width: 50px; height: 52px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .koopa .shell {
+    width: 50px; height: 40px;
+    background: #27ae60;
+    border-radius: 50%;
+    border: 2px solid #145a32;
+    position: absolute; top: 12px;
+  }
+  .koopa .shell::before {
+    content: ''; position: absolute;
+    top: 8px; left: 8px;
+    width: 32px; height: 22px;
+    background: #f1c40f;
+    border-radius: 50%;
+    border: 1px solid #7d5f06;
+  }
+  .koopa .head {
+    width: 22px; height: 22px;
+    background: #f1c40f;
+    border-radius: 50%;
+    border: 2px solid #145a32;
+    position: absolute;
+    top: 0; left: 14px;
+  }
+
+  /* COIN — tròn xoay */
+  .coin {
+    width: 30px; height: 36px;
+    margin: 0 auto;
+    background: radial-gradient(ellipse at center, #ffe27a 30%, #f39c12 70%);
+    border: 2px solid #b8770a;
+    border-radius: 40%;
+    position: relative;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15);
+  }
+  .coin::before {
+    content: '$'; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    color: #8b5a06; font-weight: bold; font-size: 0.85rem;
+  }
+
+  /* MUSHROOM */
+  .mushroom {
+    width: 44px; height: 44px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .mushroom .cap {
+    width: 44px; height: 28px;
+    background: #e74c3c;
+    border-radius: 50% 50% 25% 25%;
+    border: 2px solid #5a1a1a;
+    position: relative;
+  }
+  .mushroom .cap::before, .mushroom .cap::after {
+    content: '';
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    border: 1.5px solid #5a1a1a;
+  }
+  .mushroom .cap::before {
+    width: 10px; height: 10px;
+    top: 5px; left: 6px;
+  }
+  .mushroom .cap::after {
+    width: 12px; height: 12px;
+    top: 7px; right: 6px;
+  }
+  .mushroom .stem {
+    width: 28px; height: 16px;
+    background: #ffd5b0;
+    border-radius: 40% 40% 50% 50%;
+    border: 2px solid #5a2a0a;
+    margin: -2px auto 0;
+  }
+  .mushroom .stem::before, .mushroom .stem::after {
+    content: '';
+    position: absolute;
+    width: 4px; height: 6px;
+    background: #000;
+    border-radius: 50%;
+    top: 30px;
+  }
+  .mushroom .stem::before { left: 11px }
+  .mushroom .stem::after { right: 11px }
+
+  /* FIRE FLOWER */
+  .flower {
+    width: 40px; height: 50px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .flower .petals {
+    width: 40px; height: 40px;
+    background: radial-gradient(circle at 50% 50%, #ffe27a 25%, #e74c3c 25% 60%, #fff 60% 70%, #e74c3c 70%);
+    border-radius: 50%;
+    border: 2px solid #5a1a1a;
+  }
+  .flower .center {
+    position: absolute;
+    top: 13px; left: 11px;
+    width: 14px; height: 14px;
+    background: #2980b9;
+    border-radius: 50%;
+    border: 1.5px solid #142850;
+  }
+  .flower .stem {
+    width: 6px; height: 14px;
+    background: #27ae60;
+    border-radius: 40%;
+    margin: -2px auto 0;
+    border: 1.5px solid #145a32;
+    border-top: none;
+  }
+
+  /* FIREBALL */
+  .fireball {
+    width: 26px; height: 26px;
+    margin: 0 auto;
+    background: radial-gradient(circle at 35% 35%, #fff 5%, #ffe27a 25%, #ff7f00 60%, #c0392b 95%);
+    border-radius: 50%;
+    border: 1.5px solid #c0392b;
+    box-shadow: 0 0 8px #ff7f00;
+  }
+
+  /* BRICK & ?-BLOCK & PIPE — bo góc */
+  .blocks-row {
+    display: flex; gap: 0.5rem;
+    justify-content: center;
+    margin: 0.5rem 0;
+  }
+  .brick {
+    width: 40px; height: 40px;
+    background: linear-gradient(180deg, #c0392b, #922b21);
+    border: 2px solid #5a1a1a;
+    border-radius: 8px;
+    position: relative;
+  }
+  .brick::before {
+    content: ''; position: absolute;
+    top: 8px; left: 4px; right: 4px;
+    height: 1.5px;
+    background: rgba(0,0,0,0.3);
+  }
+  .qblock {
+    width: 40px; height: 40px;
+    background: linear-gradient(180deg, #f39c12, #d68910);
+    border: 2px solid #7d5f06;
+    border-radius: 8px;
+    color: #fff;
+    text-align: center;
+    line-height: 36px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+  }
+  .pipe {
+    width: 40px; height: 50px;
+    background: linear-gradient(180deg, #27ae60, #145a32);
+    border: 2px solid #0e3d22;
+    border-radius: 8px 8px 4px 4px;
+    position: relative;
+  }
+  .pipe::before {
+    content: ''; position: absolute;
+    top: 0; left: -4px; right: -4px;
+    height: 12px;
+    background: linear-gradient(180deg, #2ecc71, #196f3d);
+    border: 2px solid #0e3d22;
+    border-radius: 10px;
+  }
+
+  /* BOSS */
+  .boss {
+    width: 70px; height: 60px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .boss .body {
+    width: 70px; height: 50px;
+    background: radial-gradient(ellipse at 50% 30%, #f1c40f 0 18%, #e67e22 18% 60%, #b9541b 60%);
+    border-radius: 45% 45% 35% 35%;
+    border: 2.5px solid #5a2a0a;
+    position: absolute;
+    bottom: 0;
+  }
+  .boss .horn {
+    position: absolute;
+    width: 12px; height: 14px;
+    background: #fff;
+    border-radius: 50% 50% 20% 20%;
+    border: 2px solid #5a2a0a;
+    top: 4px;
+  }
+  .boss .horn.left { left: 12px }
+  .boss .horn.right { right: 12px }
+  .boss .eye {
+    position: absolute;
+    width: 14px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    border: 1.5px solid #000;
+    top: 14px;
+  }
+  .boss .eye.left { left: 18px }
+  .boss .eye.right { right: 18px }
+  .boss .eye::after {
+    content: ''; position: absolute;
+    top: 7px; left: 3px;
+    width: 6px; height: 8px;
+    background: #c0392b;
+    border-radius: 50%;
+  }
+
+  .section-title {
+    font-size: 0.85rem; font-weight: bold;
+    color: #444; margin-top: 1rem;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px dashed #ccc;
+  }
+</style>
+
+<div class="section-title">🦸 Player — 3 hình thái</div>
+<div class="demo-stage">
+  <div class="ent-card">
+    <div class="mario-small"><div class="hat"></div><div class="head"></div><div class="body"></div></div>
+    <div class="label">SMALL</div>
+  </div>
+  <div class="ent-card">
+    <div class="mario-big"><div class="hat"></div><div class="head"></div><div class="body"></div></div>
+    <div class="label">BIG</div>
+  </div>
+  <div class="ent-card">
+    <div class="mario-big mario-fire"><div class="hat"></div><div class="head"></div><div class="body"></div></div>
+    <div class="label">FIRE</div>
+  </div>
+</div>
+
+<div class="section-title">👾 Enemies</div>
+<div class="demo-stage">
+  <div class="ent-card">
+    <div class="goomba">
+      <div class="cap"></div>
+      <div class="eye left"></div>
+      <div class="eye right"></div>
+      <div class="foot left"></div>
+      <div class="foot right"></div>
+    </div>
+    <div class="label">GOOMBA</div>
+  </div>
+  <div class="ent-card">
+    <div class="koopa">
+      <div class="head"></div>
+      <div class="shell"></div>
+    </div>
+    <div class="label">KOOPA</div>
+  </div>
+</div>
+
+<div class="section-title">💰 Items</div>
+<div class="demo-stage" style="padding-bottom:1.5rem;align-items:center">
+  <div class="ent-card">
+    <div class="coin"></div>
+    <div class="label">COIN</div>
+  </div>
+  <div class="ent-card">
+    <div class="mushroom"><div class="cap"></div><div class="stem"></div></div>
+    <div class="label">MUSHROOM</div>
+  </div>
+  <div class="ent-card">
+    <div class="flower"><div class="petals"></div><div class="center"></div><div class="stem"></div></div>
+    <div class="label">FIRE FLOWER</div>
+  </div>
+  <div class="ent-card">
+    <div class="fireball"></div>
+    <div class="label">FIREBALL</div>
+  </div>
+</div>
+
+<div class="section-title">🧱 Blocks (bo góc 8px)</div>
+<div class="demo-stage" style="padding-bottom:1.5rem;align-items:center">
+  <div class="ent-card"><div class="brick"></div><div class="label">BRICK</div></div>
+  <div class="ent-card"><div class="qblock">?</div><div class="label">?-BLOCK</div></div>
+  <div class="ent-card"><div class="pipe"></div><div class="label">PIPE</div></div>
+</div>
+
+<div class="section-title">👹 Boss</div>
+<div class="demo-stage" style="padding-bottom:1.5rem;align-items:center">
+  <div class="ent-card">
+    <div class="boss">
+      <div class="horn left"></div>
+      <div class="horn right"></div>
+      <div class="body"></div>
+      <div class="eye left"></div>
+      <div class="eye right"></div>
+    </div>
+    <div class="label">BOWSER-LIKE BOSS</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <h3>🎨 Nguyên tắc thiết kế</h3>
+  <ul style="font-size:0.85rem">
+    <li><strong>Không cạnh sắc</strong> — mọi entity có border-radius ≥30% hoặc dạng tròn/elip</li>
+    <li><strong>Stroke đậm</strong> — viền 2px màu tối hơn body, tạo cảm giác cartoon</li>
+    <li><strong>Gradient nhẹ</strong> — radial-gradient cho coin/fireball, linear-gradient dọc cho block, đỡ phẳng lì</li>
+    <li><strong>Blocks bo góc 8px</strong> — brick/?-block/pipe vẫn vuông tổng thể nhưng góc tròn → đồng bộ với entities</li>
+    <li><strong>Render bằng Canvas API</strong>: <code>roundRect</code>, <code>arc</code>, <code>quadraticCurveTo</code>, gradient — tất cả có sẵn, không cần thư viện</li>
+  </ul>
+</div>
