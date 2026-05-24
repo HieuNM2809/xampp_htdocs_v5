@@ -9,11 +9,19 @@ Học **n8n** self-host trên máy local (Windows + Docker Desktop), import work
 ├── docker-compose.yml
 ├── .env.example
 ├── workflows/
-│   └── 01_webhook_hello.json    # Import vào n8n
+│   ├── README.md                # Mô tả từng workflow + use case IT
+│   ├── 01_webhook_hello.json    # Smoke test (Webhook → Set)
+│   ├── 02_health_check.json     # Uptime/health check (Schedule + Manual)
+│   ├── 03_log_intake.json       # Log/incident intake (Webhook → Enrich → IF)
+│   └── 04_ip_check.json         # IP reputation lookup (Webhook → HTTP → IF)
 └── scripts/
-    ├── 01_trigger_webhook.ps1   # Windows
-    └── 01_trigger_webhook.sh      # Git Bash / WSL
+    ├── 01_trigger_webhook.ps1 / .sh
+    ├── 02_health_check.ps1 / .sh
+    ├── 03_log_intake.ps1 / .sh
+    └── 04_ip_check.ps1 / .sh
 ```
+
+> Chi tiết từng workflow (mục đích IT, payload, mở rộng): [`workflows/README.md`](workflows/README.md)
 
 ## Yêu cầu
 
@@ -107,15 +115,9 @@ flowchart LR
 
 ---
 
-## Xây workflow 02 thủ công (không import)
+## Workflow 02 / 03 / 04 — ứng dụng IT
 
-Gợi ý bài tiếp theo trong UI:
-
-1. **Schedule Trigger** — chạy mỗi 5 phút
-2. **HTTP Request** — `GET https://httpbin.org/get`
-3. **Set** — lưu field `url` từ response
-
-So sánh: trigger theo lịch vs trigger theo webhook (workflow 01).
+Đã có sẵn 3 workflow import-ready trong `workflows/` cho các tác vụ IT thường gặp: health-check service, intake log/incident, kiểm tra reputation IP. Xem [`workflows/README.md`](workflows/README.md) cho payload, diagram và cách test.
 
 ---
 

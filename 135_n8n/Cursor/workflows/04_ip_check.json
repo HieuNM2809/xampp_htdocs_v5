@@ -1,0 +1,201 @@
+{
+  "name": "04 IP Reputation Check",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ip-check",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "c4d3e2f0-1111-4000-8000-000000000001",
+      "name": "Webhook /ip-check",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "webhookId": "135-cursor-ipcheck"
+    },
+    {
+      "parameters": {
+        "url": "=http://ip-api.com/json/{{ $json.body.ip }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "status,message,country,isp,org,proxy,hosting,query"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "c4d3e2f0-2222-4000-8000-000000000002",
+      "name": "ip-api lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c4d3e2f0-3333-4000-8000-000000000003",
+              "leftValue": "={{ $json.status === 'success' && !$json.proxy && !$json.hosting }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c4d3e2f0-4444-4000-8000-000000000004",
+      "name": "Clean?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4d3e2f0-5555-4000-8000-000000000005",
+              "name": "ip",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "c4d3e2f0-6666-4000-8000-000000000006",
+              "name": "verdict",
+              "value": "clean",
+              "type": "string"
+            },
+            {
+              "id": "c4d3e2f0-7777-4000-8000-000000000007",
+              "name": "country",
+              "value": "={{ $json.country }}",
+              "type": "string"
+            },
+            {
+              "id": "c4d3e2f0-8888-4000-8000-000000000008",
+              "name": "isp",
+              "value": "={{ $json.isp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c4d3e2f0-9999-4000-8000-000000000009",
+      "name": "Clean",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 220]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4d3e2f0-aaaa-4000-8000-00000000000a",
+              "name": "ip",
+              "value": "={{ $json.query || $('Webhook /ip-check').item.json.body.ip }}",
+              "type": "string"
+            },
+            {
+              "id": "c4d3e2f0-bbbb-4000-8000-00000000000b",
+              "name": "verdict",
+              "value": "suspicious",
+              "type": "string"
+            },
+            {
+              "id": "c4d3e2f0-cccc-4000-8000-00000000000c",
+              "name": "reasons",
+              "value": "={{ [ $json.proxy ? 'proxy' : null, $json.hosting ? 'hosting' : null, $json.status !== 'success' ? 'lookup_failed:' + ($json.message || 'unknown') : null ].filter(Boolean) }}",
+              "type": "array"
+            },
+            {
+              "id": "c4d3e2f0-dddd-4000-8000-00000000000d",
+              "name": "country",
+              "value": "={{ $json.country || null }}",
+              "type": "string"
+            },
+            {
+              "id": "c4d3e2f0-eeee-4000-8000-00000000000e",
+              "name": "isp",
+              "value": "={{ $json.isp || null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c4d3e2f0-ffff-4000-8000-00000000000f",
+      "name": "Suspicious",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 400]
+    }
+  ],
+  "connections": {
+    "Webhook /ip-check": {
+      "main": [
+        [
+          {
+            "node": "ip-api lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ip-api lookup": {
+      "main": [
+        [
+          {
+            "node": "Clean?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean?": {
+      "main": [
+        [
+          {
+            "node": "Clean",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Suspicious",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}

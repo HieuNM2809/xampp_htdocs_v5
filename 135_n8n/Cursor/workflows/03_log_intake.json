@@ -1,0 +1,217 @@
+{
+  "name": "03 Log / Incident Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "log",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "b3c2d1e0-1111-4000-8000-000000000001",
+      "name": "Webhook /log",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "webhookId": "135-cursor-log"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3c2d1e0-2222-4000-8000-000000000002",
+              "name": "service",
+              "value": "={{ $json.body.service || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-3333-4000-8000-000000000003",
+              "name": "level",
+              "value": "={{ ($json.body.level || 'info').toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-4444-4000-8000-000000000004",
+              "name": "msg",
+              "value": "={{ $json.body.msg || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-5555-4000-8000-000000000005",
+              "name": "receivedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b3c2d1e0-6666-4000-8000-000000000006",
+      "name": "Enrich",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "b3c2d1e0-7777-4000-8000-000000000007",
+              "leftValue": "={{ ['error','critical','fatal'].includes($json.level) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b3c2d1e0-8888-4000-8000-000000000008",
+      "name": "Severe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3c2d1e0-9999-4000-8000-000000000009",
+              "name": "action",
+              "value": "forward",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-aaaa-4000-8000-00000000000a",
+              "name": "alert",
+              "value": "=[{{ $json.level | upper }}] {{ $json.service }} — {{ $json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-bbbb-4000-8000-00000000000b",
+              "name": "service",
+              "value": "={{ $json.service }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-cccc-4000-8000-00000000000c",
+              "name": "level",
+              "value": "={{ $json.level }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-dddd-4000-8000-00000000000d",
+              "name": "receivedAt",
+              "value": "={{ $json.receivedAt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b3c2d1e0-eeee-4000-8000-00000000000e",
+      "name": "Forward",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 220]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3c2d1e0-ffff-4000-8000-00000000000f",
+              "name": "action",
+              "value": "ack",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-1010-4000-8000-000000000010",
+              "name": "service",
+              "value": "={{ $json.service }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-1111-4000-8001-000000000011",
+              "name": "level",
+              "value": "={{ $json.level }}",
+              "type": "string"
+            },
+            {
+              "id": "b3c2d1e0-1212-4000-8000-000000000012",
+              "name": "receivedAt",
+              "value": "={{ $json.receivedAt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b3c2d1e0-1313-4000-8000-000000000013",
+      "name": "Ack",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 400]
+    }
+  ],
+  "connections": {
+    "Webhook /log": {
+      "main": [
+        [
+          {
+            "node": "Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich": {
+      "main": [
+        [
+          {
+            "node": "Severe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Severe?": {
+      "main": [
+        [
+          {
+            "node": "Forward",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}
