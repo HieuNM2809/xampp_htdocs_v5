@@ -1,0 +1,20 @@
+{
+  "name": "136-husky-git-hooks",
+  "version": "1.0.0",
+  "description": "Husky demo — Git hooks với pre-commit, commit-msg, pre-push",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "prepare": "node scripts/prepare-husky.mjs",
+    "setup:sandbox": "node scripts/setup-sandbox.mjs",
+    "hook:pre-commit": "node lib/check-staged.js",
+    "hook:commit-msg": "node lib/check-commit-msg.js",
+    "hook:pre-push": "npm test",
+    "test": "node lib/run-tests.js",
+    "docs:01": "node -e \"console.log('Đọc file: 01_HUONG_DAN_CAI_DAT.md')\"",
+    "docs:02": "node -e \"console.log('Đọc file: 02_CAC_LOAI_HOOK.md')\""
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
