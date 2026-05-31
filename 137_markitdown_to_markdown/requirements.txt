@@ -1,0 +1,7 @@
+# MarkItDown core + tất cả converter (PDF, DOCX, PPTX, XLSX, audio, YouTube, ...)
+markitdown[all]>=0.0.2
+
+# HTTP service (ví dụ 04)
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9

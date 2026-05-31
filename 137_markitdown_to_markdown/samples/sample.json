@@ -1,0 +1,15 @@
+{
+  "report_id": "RPT-2026-Q1-001",
+  "generated_at": "2026-04-05T08:30:00+07:00",
+  "summary": {
+    "total_revenue_vnd": 4480000000,
+    "growth_yoy": "+38%",
+    "best_channel": "online_web"
+  },
+  "channels": [
+    {"name": "store", "revenue_vnd": 1250000000, "growth": "+12%"},
+    {"name": "online_web", "revenue_vnd": 2340000000, "growth": "+45%"},
+    {"name": "mobile_app", "revenue_vnd": 890000000, "growth": "+78%"}
+  ],
+  "top_categories": ["Skincare", "Sunscreen", "Haircare"]
+}

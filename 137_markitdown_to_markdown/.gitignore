@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Output từ các script ví dụ — giữ thư mục, bỏ nội dung
+output/*
+!output/.gitkeep
+
+# Pytest / mypy cache
+.pytest_cache/
+.mypy_cache/
+
+# Tạm
+*.log
+*.tmp
