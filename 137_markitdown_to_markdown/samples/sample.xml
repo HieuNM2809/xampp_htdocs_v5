@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+  <product id="P001">
+    <name>Sữa rửa mặt Cetaphil 250ml</name>
+    <category>Skincare</category>
+    <price currency="VND">295000</price>
+  </product>
+  <product id="P002">
+    <name>Kem chống nắng Anessa 60ml</name>
+    <category>Sunscreen</category>
+    <price currency="VND">650000</price>
+  </product>
+</catalog>

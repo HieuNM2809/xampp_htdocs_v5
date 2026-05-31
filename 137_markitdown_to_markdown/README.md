@@ -129,12 +129,17 @@ markitdown samples\sample.csv -o output\via-cli.md
 ```
 137_markitdown_to_markdown/
 ├── README.md
-├── requirements.txt           # markitdown[all] + fastapi + uvicorn
+├── requirements.txt           # markitdown[all] + fastapi + python-docx + reportlab
 ├── .gitignore
-├── samples/
-│   ├── sample.html
-│   ├── sample.csv
-│   └── sample.json
+├── make_samples.py            # Sinh 13 file mẫu đa định dạng
+├── samples/                   # File mẫu (do make_samples.py + ban đầu sinh)
+│   ├── sample.html / .csv / .json  ← sẵn
+│   ├── sample.xml / .txt / .md     ← text/data
+│   ├── sample.docx / .xlsx / .pptx ← Office (write bằng python-docx/openpyxl/python-pptx)
+│   ├── sample.pdf                  ← reportlab
+│   ├── sample.png / .jpg / .gif / .bmp  ← Pillow
+│   ├── sample.wav                  ← built-in `wave`
+│   └── sample.zip                  ← built-in `zipfile`
 ├── output/                    # gitignore
 │   └── .gitkeep
 ├── 01_basic_convert.py
@@ -142,6 +147,37 @@ markitdown samples\sample.csv -o output\via-cli.md
 ├── 03_url_convert.py
 └── 04_fastapi_server.py
 ```
+
+### Sinh lại file mẫu
+
+```powershell
+python make_samples.py
+```
+
+Phủ 13 đuôi. **Không sinh**:
+- `.doc` / `.ppt` — format binary cũ, không có lib write phổ biến.
+- `.msg` — Outlook proprietary.
+- `.mp3` / `.m4a` — cần ffmpeg / encoder.
+- `.epub` — zip + XML schema phức tạp, ít test value.
+
+### Kết quả batch convert thực tế (MarkItDown 0.1.6)
+
+| Định dạng | Convert OK? | Ghi chú |
+|-----------|-------------|---------|
+| `.html` / `.htm` | ✅ | h1, table, list, blockquote, links |
+| `.csv` | ✅ | Markdown table chuẩn |
+| `.json` | ✅ | JSON nguyên dạng |
+| `.xml` | ✅ | Text trích từ XML |
+| `.txt` / `.md` | ✅ | Passthrough |
+| `.docx` | ✅ | Heading + paragraph + table |
+| `.xlsx` / `.xls` | ✅ | Mỗi sheet → 1 `## Heading` + bảng MD |
+| `.pptx` | ✅ | Mỗi slide → 1 nhóm với comment `<!-- Slide number: N -->` |
+| `.pdf` | ✅ | Text trích thẳng (không có cấu trúc table) |
+| `.zip` | ✅ | **Recursive** — convert từng file trong zip |
+| `.png` / `.jpg` / `.jpeg` | ⚠️ | Output rỗng nếu không có LLM client (chỉ trả EXIF, mà ảnh test không có) |
+| `.bmp` / `.gif` | ❌ | MarkItDown 0.1.6 không có converter built-in cho 2 đuôi này |
+| `.wav` (silence) | ❌ | `speech_recognition` báo UnknownValueError — cần audio có lời |
+| `.mp3` / `.m4a` | ⚠️ | Cần cài ffmpeg ngoài để pydub đọc được |
 
 ---
 
