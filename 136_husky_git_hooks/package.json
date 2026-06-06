@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "prepare": "husky",
+    "prepare": "node scripts/prepare-husky.mjs",
     "setup:sandbox": "node scripts/setup-sandbox.mjs",
     "hook:pre-commit": "node lib/check-staged.js",
     "hook:commit-msg": "node lib/check-commit-msg.js",
