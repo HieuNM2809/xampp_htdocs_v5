@@ -27,7 +27,7 @@ Project 136 dùng biến thể an toàn hơn cho repo lồng nhau:
 "prepare": "node scripts/prepare-husky.mjs"
 ```
 
-`prepare-husky.mjs` chỉ chạy `husky` khi **git root trùng** thư mục project (ví dụ sau `npm run setup:sandbox`).
+`prepare-husky.mjs` chỉ chạy `husky` khi **git root trùng** thư mục project. Điều này đúng trong 2 trường hợp: (1) folder `136_husky_git_hooks` đã `git init` thành repo độc lập, hoặc (2) bên trong `sandbox/` sau `npm run setup:sandbox`. Trong các trường hợp khác (vd. `npm install` từ repo cha lồng folder này) nó sẽ bỏ qua để **không ghi đè hook repo cha**.
 
 ## Bước 3: `prepare` và `npm install`
 
