@@ -105,6 +105,39 @@ python 03_form_fill.py         # điền & submit form tự động
 | `01_basic_search.py` | Agent tối thiểu: giao 1 task, để nó tự làm và trả lời. |
 | `02_extract_data.py` | Ép agent trả về JSON đúng schema (Pydantic `output_model`). |
 | `03_form_fill.py` | Agent điền form nhiều bước trên trang demo. |
+| `04_google_tasks_to_sheet.py` | **Thực chiến**: đọc list "Work" trên Google Tasks → viết gọn → ghi vào Google Sheets DSM (dòng "Nguyễn Minh Hiếu"). |
+
+---
+
+## 5b. Script thực chiến: Google Tasks → Google Sheets (`04_*.py`)
+
+**Công cụ**: `browser-use` (khung agent) + Chromium/Playwright (điều khiển trình duyệt) + `ChatGoogle`/Gemini (bộ não).
+
+**Đăng nhập Google** — Google chặn login trên trình duyệt bị điều khiển, nên có 2 cách (script hỗ trợ cả hai):
+
+| Cách | Khi nào | Cách dùng |
+|---|---|---|
+| **A — CDP** (khuyên dùng) | Ổn định nhất, dùng Chrome thật đã đăng nhập | Mở Chrome với cổng debug rồi set `CDP_URL` |
+| **B — Profile bền vững** | Không muốn động tới Chrome chính | Để trống `CDP_URL`, đăng nhập tay lần đầu |
+
+**Cách A (CDP):**
+```powershell
+# 1) Đóng hết Chrome, rồi mở Chrome với cổng debug (đăng nhập Google trong cửa sổ này lần đầu)
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\chrome-debug"
+
+# 2) Cửa sổ khác: trỏ script vào Chrome đó rồi chạy
+$env:CDP_URL = "http://localhost:9222"
+.\.venv\Scripts\python.exe 04_google_tasks_to_sheet.py
+```
+
+**Cách B (profile bền vững):**
+```powershell
+.\.venv\Scripts\python.exe 04_google_tasks_to_sheet.py
+# Lần đầu: cửa sổ Chromium mở ra → đăng nhập Google bằng tay → quay lại terminal nhấn ENTER.
+# Các lần sau: phiên đã lưu trong ~/.browseruse_google_profile, không cần đăng nhập lại.
+```
+
+> ⚠️ Script này **ghi vào Google Sheet công việc thật**. Nên chạy thử/đọc kỹ trước; mỗi bước đều log và kiểm tra điều kiện thành công trước khi sang bước sau.
 
 ---
 
