@@ -1,0 +1,5 @@
+# Browser-use core (kéo theo Playwright + LLM clients)
+browser-use>=0.2.0
+
+# Đọc file .env
+python-dotenv>=1.0.0

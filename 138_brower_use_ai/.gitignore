@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# uv
+.uv/
+uv.lock
+
+# Browser-use output / logs
+*.log
+agent_history/
