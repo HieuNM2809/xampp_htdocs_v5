@@ -87,7 +87,9 @@ PROFILE_DIR = str(Path.home() / ".browseruse_google_profile")
 # Neu set bien moi truong CDP_URL -> connect vao Chrome dang chay (Cach A)
 CDP_URL = os.getenv("CDP_URL")  # vd: http://localhost:9222
 
-MODEL = "gemini-2.5-flash"
+# Co the doi model qua bien moi truong GEMINI_MODEL.
+# Mac dinh flash-lite vi free tier nhieu quota hon & it bi 503/429 hon flash thuong.
+MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 
 # ============================================================
@@ -133,6 +135,9 @@ Mo trang {TASKS_URL} (neu chua dang nhap Google thi dung lai - nguoi dung da dan
    Chi lay cac task da hoan thanh thuoc NGAY GAN NHAT (ngay completed moi nhat co du lieu).
 3. Voi MOI task lay duoc, hay viet lai noi dung thanh MOT cau tieng Viet ngan gon, ro rang,
    de hieu nhung GIU NGUYEN y nghia goc (bo bot ky tu thua, gach dau dong lon xon).
+   QUAN TRONG: BO QUA cac nhan giao dien cua Google Tasks nhu "Details", "Chi tiet",
+   "Add a task", "Completed" - day KHONG phai noi dung task. Chi lay tieu de task that
+   va ghi chu phu ben duoi no (neu co). Neu task chi co tieu de (vd "Limit") thi giu nguyen "Limit".
 
 Tra ve dung JSON theo schema:
   - completed_date: ngay gan nhat cua nhom task da hoan thanh (vd "07-06" hoac mo ta).
