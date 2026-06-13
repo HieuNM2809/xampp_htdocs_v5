@@ -15,7 +15,7 @@ import { sleep } from 'k6';
 // `options` là cấu hình test. Khai báo ở đây thì không cần truyền cờ --vus/--duration.
 export const options = {
   vus: 10, // số Virtual User (luồng ảo) chạy đồng thời
-  duration: '30s', // tổng thời gian chạy test
+  duration: '10s', // tổng thời gian chạy test
 };
 
 // Hàm `default` chính là phần thân vòng lặp mà MỖI VU lặp lại liên tục.

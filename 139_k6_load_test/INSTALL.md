@@ -314,6 +314,27 @@ k6 run --summary-export=summary.json 02_thresholds.js   # xuất summary ra JSON
 k6 run --out json=results.json 02_thresholds.js         # xuất chi tiết từng điểm dữ liệu
 ```
 
+### Web dashboard tích hợp (`K6_WEB_DASHBOARD=true`)
+
+Từ k6 v0.49.0 trở lên có sẵn web dashboard xem biểu đồ trực quan, không cần cài thêm:
+
+```bash
+# Dashboard real-time tại http://127.0.0.1:5665 trong lúc test chạy
+K6_WEB_DASHBOARD=true k6 run 01_basic.js
+
+# Xuất báo cáo HTML tĩnh sau khi chạy xong
+K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=k6-report.html k6 run 01_basic.js
+```
+
+```powershell
+# Windows PowerShell
+$env:K6_WEB_DASHBOARD="true"; k6 run 01_basic.js
+```
+
+> Biến tùy chỉnh: `K6_WEB_DASHBOARD_PORT` (mặc định 5665), `K6_WEB_DASHBOARD_HOST`,
+> `K6_WEB_DASHBOARD_PERIOD`, `K6_WEB_DASHBOARD_OPEN`, `K6_WEB_DASHBOARD_EXPORT`.
+> Chi tiết xem mục "Web dashboard tích hợp sẵn" trong [`README.md`](./README.md).
+
 ---
 
 ## 7. Xử lý lỗi thường gặp

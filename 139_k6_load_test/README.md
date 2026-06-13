@@ -367,6 +367,35 @@ k6 run --out json=results.json 02_thresholds.js
 k6 run --out experimental-prometheus-rw 02_thresholds.js
 ```
 
+### Web dashboard tích hợp sẵn (`K6_WEB_DASHBOARD=true`)
+
+Từ **k6 v0.49.0** trở lên, k6 có sẵn **web dashboard** xem biểu đồ trực quan — KHÔNG cần cài
+thêm extension. Bật bằng biến môi trường `K6_WEB_DASHBOARD=true`:
+
+```bash
+# 1) Dashboard real-time: mở trình duyệt xem biểu đồ ngay trong lúc test chạy
+K6_WEB_DASHBOARD=true k6 run 01_basic.js
+#    => k6 in ra dòng:  web dashboard: http://127.0.0.1:5665
+#    => mở link đó trên trình duyệt để xem latency/RPS/VUs cập nhật theo thời gian thực
+
+# 2) Xuất báo cáo HTML tĩnh (lưu trữ / gửi cho người khác — không cần chạy lại test)
+K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=k6-report.html k6 run 01_basic.js
+```
+
+Các biến môi trường tùy chỉnh kèm theo:
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `K6_WEB_DASHBOARD` | `false` | Bật/tắt web dashboard |
+| `K6_WEB_DASHBOARD_PORT` | `5665` | Cổng phục vụ dashboard real-time |
+| `K6_WEB_DASHBOARD_HOST` | `localhost` | Host lắng nghe (đặt `0.0.0.0` nếu xem từ máy khác) |
+| `K6_WEB_DASHBOARD_PERIOD` | `10s` | Tần suất cập nhật biểu đồ |
+| `K6_WEB_DASHBOARD_OPEN` | `false` | Tự mở trình duyệt khi test bắt đầu |
+| `K6_WEB_DASHBOARD_EXPORT` | (trống) | Đường dẫn file HTML report xuất ra sau khi chạy xong |
+
+> Trên Windows (Git Bash) cú pháp đặt biến ở đầu dòng như trên hoạt động bình thường.
+> Với PowerShell dùng: `$env:K6_WEB_DASHBOARD="true"; k6 run 01_basic.js`.
+
 ---
 
 ## 5. Cài đặt & chạy nhanh
