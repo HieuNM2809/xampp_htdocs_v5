@@ -1,4 +1,2 @@
 # Kết quả xuất ra khi chạy test
-summary.json
-*.csv.out
-results/
+/.idea/
