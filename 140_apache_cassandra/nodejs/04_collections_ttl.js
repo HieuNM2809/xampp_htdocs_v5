@@ -58,19 +58,19 @@ async function main() {
     // ===== TTL =====
     await client.execute(`
       CREATE TABLE IF NOT EXISTS sessions (
-        session_id uuid PRIMARY KEY,
-        token      text
+        session_id    uuid PRIMARY KEY,
+        session_token text
       )
     `);
     const sid = types.Uuid.random();
     // Dòng tự hết hạn sau 60 giây
     await client.execute(
-      'INSERT INTO sessions (session_id, token) VALUES (?, ?) USING TTL 60',
+      'INSERT INTO sessions (session_id, session_token) VALUES (?, ?) USING TTL 60',
       [sid, 'abc.token.xyz'],
       { prepare: true }
     );
     const ttlRs = await client.execute(
-      'SELECT token, TTL(token) AS ttl FROM sessions WHERE session_id = ?',
+      'SELECT session_token, TTL(session_token) AS ttl FROM sessions WHERE session_id = ?',
       [sid],
       { prepare: true }
     );
