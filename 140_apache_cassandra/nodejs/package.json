@@ -1,0 +1,21 @@
+{
+  "name": "140-apache-cassandra",
+  "version": "1.0.0",
+  "description": "Apache Cassandra examples with Node.js (cassandra-driver) - basic to advanced",
+  "type": "module",
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f cassandra",
+    "cqlsh": "docker exec -it cassandra-demo cqlsh",
+    "01:connect": "node 01_connect.js",
+    "02:crud": "node 02_crud.js",
+    "03:modeling": "node 03_data_modeling.js",
+    "04:collections": "node 04_collections_ttl.js",
+    "05:batch": "node 05_batch_counter_lwt.js",
+    "06:paging": "node 06_consistency_paging.js"
+  },
+  "dependencies": {
+    "cassandra-driver": "^4.7.2"
+  }
+}
