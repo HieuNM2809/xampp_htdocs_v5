@@ -1,0 +1,17 @@
+{
+  "name": "142-zalo-bot",
+  "version": "1.0.0",
+  "description": "Ví dụ Zalo Bot HTTP API với Node.js: getMe, sendMessage, long-polling echo bot, webhook, tin nhắn định dạng",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "01:getme": "node --env-file-if-exists=.env src/01_getme.js",
+    "02:send": "node --env-file-if-exists=.env src/02_send_message.js",
+    "03:poll": "node --env-file-if-exists=.env src/03_polling_echo_bot.js",
+    "04:webhook": "node --env-file-if-exists=.env src/04_webhook_server.js",
+    "04:admin": "node --env-file-if-exists=.env src/04_webhook_admin.js",
+    "05:rich": "node --env-file-if-exists=.env src/05_rich_message.js"
+  }
+}
