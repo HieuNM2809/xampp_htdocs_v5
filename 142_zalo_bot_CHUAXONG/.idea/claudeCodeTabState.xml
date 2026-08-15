@@ -7,11 +7,10 @@
           <value>
             <TabSessionState>
               <option name="provider" value="claude" />
-              <option name="sessionId" value="fe712ac7-c70a-4c83-99b2-a94d85b77236" />
-              <option name="cwd" value="E:\xampp_htdocs_v5" />
+              <option name="sessionId" value="8966bdf4-cfe6-472b-aeb3-3766d629c397" />
+              <option name="cwd" value="E:\xampp_htdocs_v5\142_zalo_bot_CHUAXONG" />
               <option name="model" value="claude-opus-4-8[1m]" />
               <option name="permissionMode" value="bypassPermissions" />
-              <option name="reasoningEffort" value="max" />
             </TabSessionState>
           </value>
         </entry>

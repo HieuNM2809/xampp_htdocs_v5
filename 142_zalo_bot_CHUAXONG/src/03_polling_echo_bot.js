@@ -53,9 +53,15 @@ while (running) {
       if (!msg) continue;
 
       const from = msg.from?.display_name || msg.from?.id || "?";
+      const chat = msg.chat || {};
+      // chat.id CHÍNH LÀ chat_id cần cho sendMessage (02). Với NHÓM: thêm bot vào nhóm
+      // bằng link mời, nhắn 1 tin trong nhóm → 2 dòng dưới in chat_id nhóm để bạn copy.
       console.log(
-        `📩 [${update.event_name}] ${from} (chat ${msg.chat?.id}): ${msg.text ?? "(không phải text)"}`,
+        `📩 [${update.event_name}] ${from} → chat_id=${chat.id}` +
+          (chat.type ? ` [${chat.type}${chat.name ? ` "${chat.name}"` : ""}]` : "") +
+          `: ${msg.text ?? "(không phải text)"}`,
       );
+      console.log("   ↳ chat:", JSON.stringify(chat));
 
       if (update.event_name === "message.text.received" && msg.text) {
         await callApi("sendMessage", { chat_id: msg.chat.id, text: `Bạn vừa nói: ${msg.text}` });

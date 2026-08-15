@@ -65,9 +65,15 @@ async function handleUpdate(body) {
   if (!msg) return;
 
   const from = msg.from?.display_name || msg.from?.id || "?";
+  const chat = msg.chat || {};
+  // chat.id = chat_id cho sendMessage (02). Với NHÓM: thêm bot vào nhóm, nhắn 1 tin
+  // trong nhóm → 2 dòng dưới in chat_id nhóm để copy.
   console.log(
-    `📩 [${update.event_name}] ${from} (chat ${msg.chat?.id}): ${msg.text ?? "(không phải text)"}`,
+    `📩 [${update.event_name}] ${from} → chat_id=${chat.id}` +
+      (chat.type ? ` [${chat.type}${chat.name ? ` "${chat.name}"` : ""}]` : "") +
+      `: ${msg.text ?? "(không phải text)"}`,
   );
+  console.log("   ↳ chat:", JSON.stringify(chat));
 
   if (update.event_name === "message.text.received" && msg.text) {
     await callApi("sendMessage", { chat_id: msg.chat.id, text: `Webhook nhận được: ${msg.text}` });

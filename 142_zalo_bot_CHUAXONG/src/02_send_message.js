@@ -4,6 +4,9 @@
 //
 // chat_id lấy ở đâu? → chạy 03 (polling) hoặc 04 (webhook); khi có người nhắn cho bot
 // sẽ in ra chat_id của họ. Bot KHÔNG thể nhắn trước cho người chưa từng nhắn nó.
+//
+// Gửi vào NHÓM: thêm bot vào nhóm bằng link mời (trong thông báo khởi tạo bot), nhắn
+// 1 tin trong nhóm → 03/04 in ra chat_id của nhóm; dùng chat_id đó để gửi thông báo.
 
 const BOT_TOKEN = process.env.ZALO_BOT_TOKEN;
 const API_BASE = process.env.ZALO_API_BASE || "https://bot-api.zaloplatforms.com";
