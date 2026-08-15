@@ -1,7 +1,2 @@
 # Bí mật — KHÔNG commit token bot
 node_modules/
-
-# Biến môi trường / token — KHÔNG commit (giữ .env.example làm mẫu)
-.env
-.env.*
-!.env.example

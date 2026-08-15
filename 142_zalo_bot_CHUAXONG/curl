@@ -1,0 +1,88 @@
+# ===== Cheat-sheet cURL — Zalo Bot API =====
+# Mẫu URL:  POST https://bot-api.zaloplatforms.com/bot<TOKEN>/<method>   (body JSON)
+# Mẹo: export ZALO_BOT_TOKEN=... rồi thay token trong URL bằng "$ZALO_BOT_TOKEN" cho khỏi lộ.
+# File này đang để token thật cho tiện chạy → đừng commit; token đã lộ nên rotate ở botcreator.
+
+1. API getMe — kiểm tra thông tin Bot
+curl --location --request POST 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/getMe' \
+--header 'Content-Type: application/json'
+
+
+2. sendMessage — gửi tin nhắn
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/sendMessage' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat_id": "abc.xyz",
+    "text": "Hello"
+  }'
+
+
+3. getUpdates — LẤY chat_id (long-polling)
+   → Chạy lệnh, rồi trong 30s NHẮN 1 TIN trong nhóm; kết quả trả về sẽ chứa chat_id.
+   → Muốn xem update đang chờ mà không treo: đổi "timeout": 0
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/getUpdates' \
+--header 'Content-Type: application/json' \
+--data '{
+    "timeout": 30
+  }'
+# Trong JSON trả về, tìm:  "chat": { "id": "...", "type": "group", "name": "..." }  ← "id" đó là chat_id
+
+
+4. getWebhookInfo — kiểm tra webhook (nếu đang bật, getUpdates sẽ KHÔNG nhận được tin)
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/getWebhookInfo' \
+--header 'Content-Type: application/json' \
+--data '{}'
+
+
+5. deleteWebhook — xoá webhook để quay lại dùng getUpdates
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/deleteWebhook' \
+--header 'Content-Type: application/json' \
+--data '{}'
+
+
+6. setWebhook — đăng ký webhook (URL phải là HTTPS công khai; secret_token 8–256 ký tự)
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/setWebhook' \
+--header 'Content-Type: application/json' \
+--data '{
+    "url": "https://your-domain.example/webhook",
+    "secret_token": "mot-chuoi-bi-mat-8-den-256-ky-tu"
+  }'
+
+
+7. sendMessage — định dạng MARKDOWN (*đậm*, _nghiêng_)
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/sendMessage' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat_id": "abc.xyz",
+    "text": "*Chữ đậm*\n_chữ nghiêng_\nDòng thường.",
+    "parse_mode": "markdown"
+  }'
+
+
+8. sendMessage — định dạng HTML (<b>, <i>)
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/sendMessage' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat_id": "abc.xyz",
+    "text": "<b>Đậm HTML</b> và <i>nghiêng HTML</i>",
+    "parse_mode": "html"
+  }'
+
+
+9. sendPhoto — gửi ảnh kèm caption
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/sendPhoto' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat_id": "abc.xyz",
+    "photo": "https://picsum.photos/600/400",
+    "caption": "Ảnh ngẫu nhiên gửi từ Zalo Bot 📷"
+  }'
+
+
+10. sendMessage VÀO NHÓM — chat_id là ID nhóm lấy ở mục 3 (getUpdates)
+curl --location 'https://bot-api.zaloplatforms.com/bot1370982466443225509:xZdQNNQHcTCywlgvCcLLybqbrGJUnVzEEcCJZMepOBBwauuxYCmerWrMcCneHezJ/sendMessage' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat_id": "<CHAT_ID_NHOM>",
+    "text": "🔔 Thông báo cho cả nhóm"
+  }'
