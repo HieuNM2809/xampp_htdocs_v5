@@ -1,0 +1,313 @@
+{
+  "totalInlineOccurrences": 65,
+  "uniqueImages": 51,
+  "outputDir": "public/sites/hsco/images",
+  "images": [
+    {
+      "file": "img-bad7a05ef3.png",
+      "ext": "png",
+      "bytes": 1979434,
+      "occurrences": 1
+    },
+    {
+      "file": "img-c113ac58e9.png",
+      "ext": "png",
+      "bytes": 1567535,
+      "occurrences": 1
+    },
+    {
+      "file": "img-476cc8e2c5.png",
+      "ext": "png",
+      "bytes": 1421205,
+      "occurrences": 2
+    },
+    {
+      "file": "img-8e2741a4b8.jpg",
+      "ext": "jpg",
+      "bytes": 1311912,
+      "occurrences": 2
+    },
+    {
+      "file": "img-e7313264ee.png",
+      "ext": "png",
+      "bytes": 1292769,
+      "occurrences": 1
+    },
+    {
+      "file": "img-d8f7356e37.png",
+      "ext": "png",
+      "bytes": 1221093,
+      "occurrences": 1
+    },
+    {
+      "file": "img-7a1f4e74b2.jpg",
+      "ext": "jpg",
+      "bytes": 1203226,
+      "occurrences": 1
+    },
+    {
+      "file": "img-dd5ddf7fe3.png",
+      "ext": "png",
+      "bytes": 1019618,
+      "occurrences": 1
+    },
+    {
+      "file": "img-cb25809832.png",
+      "ext": "png",
+      "bytes": 958346,
+      "occurrences": 1
+    },
+    {
+      "file": "img-bd80a08bd7.png",
+      "ext": "png",
+      "bytes": 945287,
+      "occurrences": 1
+    },
+    {
+      "file": "img-281dd5fd40.png",
+      "ext": "png",
+      "bytes": 933183,
+      "occurrences": 1
+    },
+    {
+      "file": "img-d32299f015.png",
+      "ext": "png",
+      "bytes": 926313,
+      "occurrences": 1
+    },
+    {
+      "file": "img-da30cb3228.png",
+      "ext": "png",
+      "bytes": 908147,
+      "occurrences": 1
+    },
+    {
+      "file": "img-f68e247f28.png",
+      "ext": "png",
+      "bytes": 888546,
+      "occurrences": 1
+    },
+    {
+      "file": "img-d61936baa0.png",
+      "ext": "png",
+      "bytes": 865863,
+      "occurrences": 1
+    },
+    {
+      "file": "img-95de04e55b.png",
+      "ext": "png",
+      "bytes": 839544,
+      "occurrences": 1
+    },
+    {
+      "file": "img-4b3871182a.png",
+      "ext": "png",
+      "bytes": 811773,
+      "occurrences": 1
+    },
+    {
+      "file": "img-97804c8c7d.png",
+      "ext": "png",
+      "bytes": 770857,
+      "occurrences": 1
+    },
+    {
+      "file": "img-a9a0274470.png",
+      "ext": "png",
+      "bytes": 767020,
+      "occurrences": 1
+    },
+    {
+      "file": "img-998e52399d.png",
+      "ext": "png",
+      "bytes": 762156,
+      "occurrences": 1
+    },
+    {
+      "file": "img-d338d91ef5.jpg",
+      "ext": "jpg",
+      "bytes": 724206,
+      "occurrences": 1
+    },
+    {
+      "file": "img-143d5a8d93.png",
+      "ext": "png",
+      "bytes": 664121,
+      "occurrences": 1
+    },
+    {
+      "file": "img-73336f48c1.png",
+      "ext": "png",
+      "bytes": 657394,
+      "occurrences": 1
+    },
+    {
+      "file": "img-1e699e81bf.jpg",
+      "ext": "jpg",
+      "bytes": 578743,
+      "occurrences": 1
+    },
+    {
+      "file": "img-23558812cd.jpg",
+      "ext": "jpg",
+      "bytes": 458126,
+      "occurrences": 1
+    },
+    {
+      "file": "img-a4001c1be8.jpg",
+      "ext": "jpg",
+      "bytes": 414560,
+      "occurrences": 1
+    },
+    {
+      "file": "img-7cc3a9d3bf.jpg",
+      "ext": "jpg",
+      "bytes": 387467,
+      "occurrences": 1
+    },
+    {
+      "file": "img-ae695e5ee5.jpg",
+      "ext": "jpg",
+      "bytes": 341825,
+      "occurrences": 1
+    },
+    {
+      "file": "img-aeda49ca3c.jpg",
+      "ext": "jpg",
+      "bytes": 286758,
+      "occurrences": 1
+    },
+    {
+      "file": "img-67b8af1ab6.jpg",
+      "ext": "jpg",
+      "bytes": 253659,
+      "occurrences": 1
+    },
+    {
+      "file": "img-e20fd39c4e.jpg",
+      "ext": "jpg",
+      "bytes": 129790,
+      "occurrences": 2
+    },
+    {
+      "file": "img-5610607faa.jpg",
+      "ext": "jpg",
+      "bytes": 112262,
+      "occurrences": 1
+    },
+    {
+      "file": "img-9e81579447.jpg",
+      "ext": "jpg",
+      "bytes": 96050,
+      "occurrences": 2
+    },
+    {
+      "file": "img-9d7a383c27.jpg",
+      "ext": "jpg",
+      "bytes": 95569,
+      "occurrences": 2
+    },
+    {
+      "file": "img-339a3c89ac.jpg",
+      "ext": "jpg",
+      "bytes": 94749,
+      "occurrences": 2
+    },
+    {
+      "file": "img-095c40db90.jpg",
+      "ext": "jpg",
+      "bytes": 91183,
+      "occurrences": 1
+    },
+    {
+      "file": "img-0a49556c33.jpg",
+      "ext": "jpg",
+      "bytes": 80784,
+      "occurrences": 1
+    },
+    {
+      "file": "img-61f73c1265.png",
+      "ext": "png",
+      "bytes": 71513,
+      "occurrences": 1
+    },
+    {
+      "file": "img-e02877a9c6.jpg",
+      "ext": "jpg",
+      "bytes": 66303,
+      "occurrences": 1
+    },
+    {
+      "file": "img-139bb2c312.jpg",
+      "ext": "jpg",
+      "bytes": 62959,
+      "occurrences": 1
+    },
+    {
+      "file": "img-1da8413354.jpg",
+      "ext": "jpg",
+      "bytes": 52370,
+      "occurrences": 2
+    },
+    {
+      "file": "img-195e0cb8e5.jpg",
+      "ext": "jpg",
+      "bytes": 48451,
+      "occurrences": 2
+    },
+    {
+      "file": "img-440585236f.jpg",
+      "ext": "jpg",
+      "bytes": 47306,
+      "occurrences": 2
+    },
+    {
+      "file": "img-4c1377d8b8.jpg",
+      "ext": "jpg",
+      "bytes": 41975,
+      "occurrences": 2
+    },
+    {
+      "file": "img-f0530996ea.jpg",
+      "ext": "jpg",
+      "bytes": 39450,
+      "occurrences": 1
+    },
+    {
+      "file": "img-232992ce95.jpg",
+      "ext": "jpg",
+      "bytes": 31217,
+      "occurrences": 2
+    },
+    {
+      "file": "img-63d67fd1a3.jpg",
+      "ext": "jpg",
+      "bytes": 30392,
+      "occurrences": 1
+    },
+    {
+      "file": "img-55670a55cc.jpg",
+      "ext": "jpg",
+      "bytes": 28988,
+      "occurrences": 2
+    },
+    {
+      "file": "img-4e0f7f56d5.jpg",
+      "ext": "jpg",
+      "bytes": 28588,
+      "occurrences": 2
+    },
+    {
+      "file": "img-2d5d2dfa57.jpg",
+      "ext": "jpg",
+      "bytes": 21959,
+      "occurrences": 2
+    },
+    {
+      "file": "img-9b55659329.jpg",
+      "ext": "jpg",
+      "bytes": 20604,
+      "occurrences": 1
+    }
+  ]
+}

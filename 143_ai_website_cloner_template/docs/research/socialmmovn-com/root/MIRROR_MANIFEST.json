@@ -1,0 +1,64 @@
+{
+  "totalReferenced": 206,
+  "downloaded": 192,
+  "failed": 14,
+  "failures": [
+    {
+      "url": "https://socialmmovn.com/xmlrpc.php",
+      "error": "HTTP 405"
+    },
+    {
+      "url": "https://socialmmovn.com/width=device-width,%20initial-scale=1",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/WordPress%206.9.7",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/WooCommerce%2010.7.0",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/cdn-cgi/l/email-protection#6605150d0e261509050f070a0b0b0910084805090b",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/cdn-cgi/l/email-protection#6d0e1e06052d1e020e040c010000021b03430e0200",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/Site%20Kit%20by%20Google%201.181.0",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/danh-muc-san-pham/game/",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/wp-content/uploads/nsl_avatars/d5e2f15869483ed63c7d9c243ebf8633.jpg",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/cdn-cgi/l/email-protection#c5fab6b0a7afa0a6b1f891b7a4aba2e0f7f586ade080f4e08787e084f2e3a7aaa1bcf89da0a8e0f7f5abe086f6e084f5bce0f684e0f7f5adb1b1b5b6e0f684e0f783e0f783b6aaa6aca4a9a8a8aab3abeba6aaa8e0f783",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/cdn-cgi/l/email-protection#3e014d4b5c545b5d4a036a4c5f50591b0c0e7d561b7b0f1b7c7c1b7f09185c515a4703665b531b0c0e501b7d0d1b7f0e471b0d7f1b0c0e564a4a4e4d1b0d7f1b0c781b0c784d515d575f525353514850105d51531b0c78",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/Sai%20%C4%91%E1%BB%8Bnh%20d%E1%BA%A1ng%20th%E1%BB%9Di%20gian",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/%C4%90ang%20di%E1%BB%85n%20ra!",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://socialmmovn.com/new%20Blob([t.replace(/%5E(?:%3C!--",
+      "error": "HTTP 404"
+    }
+  ],
+  "publicPrefix": "/sites/socialmmovn/assets"
+}

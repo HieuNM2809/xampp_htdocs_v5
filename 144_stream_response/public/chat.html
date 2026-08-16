@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Level 7 — AI token streaming (hiệu ứng gõ chữ)</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+      h1 { font-size: 20px; }
+      .row { display: flex; gap: 8px; margin: 16px 0; }
+      input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
+      button { padding: 10px 16px; border-radius: 8px; border: 0; background: #4338ca; color: #fff; cursor: pointer; }
+      button:disabled { opacity: .5; cursor: default; }
+      #answer { white-space: pre-wrap; line-height: 1.6; background: #f6f7fb; border: 1px solid #e5e7eb;
+                border-radius: 10px; padding: 16px; min-height: 80px; font-size: 15px; }
+      .cursor { display: inline-block; width: 8px; background: #4338ca; animation: blink 1s steps(2) infinite; }
+      @keyframes blink { 0%,50% { opacity: 1 } 50.01%,100% { opacity: 0 } }
+      .muted { color: #666; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <h1>AI token streaming — hiệu ứng gõ chữ</h1>
+    <p class="muted">Server đẩy câu trả lời theo từng <em>token</em> qua SSE (event <code>content_block_delta</code>).</p>
+
+    <div class="row">
+      <input id="q" placeholder="Hỏi gì đó..." value="Stream response là gì?" />
+      <button id="send">Gửi</button>
+    </div>
+
+    <div id="answer"></div>
+
+    <script>
+      const btn = document.getElementById('send');
+      const input = document.getElementById('q');
+      const answer = document.getElementById('answer');
+
+      function ask() {
+        const q = input.value.trim();
+        if (!q) return;
+        btn.disabled = true;
+        answer.textContent = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        cursor.innerHTML = '&nbsp;';
+        answer.appendChild(cursor);
+
+        // EventSource chỉ GET được -> gửi câu hỏi qua query string.
+        const es = new EventSource('/chat?q=' + encodeURIComponent(q));
+
+        // Mỗi delta = 1 mẩu chữ -> chèn vào TRƯỚC con trỏ nhấp nháy.
+        es.addEventListener('content_block_delta', (e) => {
+          const data = JSON.parse(e.data);
+          answer.insertBefore(document.createTextNode(data.delta.text), cursor);
+        });
+
+        // Kết thúc: bỏ con trỏ, đóng kết nối (nếu không sẽ tự reconnect).
+        es.addEventListener('message_stop', () => {
+          cursor.remove();
+          es.close();
+          btn.disabled = false;
+        });
+
+        es.addEventListener('error', () => {
+          es.close();
+          btn.disabled = false;
+        });
+      }
+
+      btn.onclick = ask;
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') ask(); });
+    </script>
+  </body>
+</html>

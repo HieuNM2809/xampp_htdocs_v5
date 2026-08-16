@@ -7,7 +7,19 @@
           <value>
             <TabSessionState>
               <option name="provider" value="claude" />
-              <option name="sessionId" value="fe712ac7-c70a-4c83-99b2-a94d85b77236" />
+              <option name="sessionId" value="16f43b64-ee12-43b4-b319-d9820dbfa2ad" />
+              <option name="cwd" value="E:\xampp_htdocs_v5" />
+              <option name="model" value="claude-opus-4-8[1m]" />
+              <option name="permissionMode" value="bypassPermissions" />
+              <option name="reasoningEffort" value="max" />
+            </TabSessionState>
+          </value>
+        </entry>
+        <entry key="1">
+          <value>
+            <TabSessionState>
+              <option name="provider" value="claude" />
+              <option name="sessionId" value="92a62aea-3cc2-40a7-b4f2-4e675eab4980" />
               <option name="cwd" value="E:\xampp_htdocs_v5" />
               <option name="model" value="claude-opus-4-8[1m]" />
               <option name="permissionMode" value="bypassPermissions" />
@@ -17,5 +29,6 @@
         </entry>
       </map>
     </option>
+    <option name="tabCount" value="2" />
   </component>
 </project>
