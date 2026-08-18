@@ -3,71 +3,211 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Level 7 — AI token streaming (hiệu ứng gõ chữ)</title>
+    <title>Chat streaming — trả lời hiện dần từng chữ</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
-      h1 { font-size: 20px; }
-      .row { display: flex; gap: 8px; margin: 16px 0; }
-      input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
-      button { padding: 10px 16px; border-radius: 8px; border: 0; background: #4338ca; color: #fff; cursor: pointer; }
-      button:disabled { opacity: .5; cursor: default; }
-      #answer { white-space: pre-wrap; line-height: 1.6; background: #f6f7fb; border: 1px solid #e5e7eb;
-                border-radius: 10px; padding: 16px; min-height: 80px; font-size: 15px; }
-      .cursor { display: inline-block; width: 8px; background: #4338ca; animation: blink 1s steps(2) infinite; }
+      :root {
+        --bg: #f5f6f8;
+        --panel: #ffffff;
+        --user: #4338ca;
+        --bot: #eef0f5;
+        --border: #e5e7eb;
+        --muted: #6b7280;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        margin: 0; background: var(--bg); color: #111827;
+        height: 100dvh; display: flex; flex-direction: column;
+      }
+      header {
+        background: var(--panel); border-bottom: 1px solid var(--border);
+        padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+      }
+      header h1 { font-size: 16px; margin: 0; }
+      #mode {
+        font-size: 11px; padding: 2px 8px; border-radius: 999px;
+        background: #e5e7eb; color: var(--muted);
+      }
+      #mode.mock { background: #fef3c7; color: #92400e; }
+
+      #chat {
+        flex: 1; overflow-y: auto; padding: 20px 16px;
+        display: flex; flex-direction: column; gap: 14px;
+        max-width: 760px; width: 100%; margin: 0 auto;
+      }
+      .msg { display: flex; }
+      .msg.user { justify-content: flex-end; }
+      .bubble {
+        max-width: 78%; padding: 10px 14px; border-radius: 14px;
+        line-height: 1.55; font-size: 15px; white-space: pre-wrap; word-wrap: break-word;
+      }
+      .user .bubble { background: var(--user); color: #fff; border-bottom-right-radius: 4px; }
+      .bot .bubble { background: var(--bot); color: #111827; border-bottom-left-radius: 4px; }
+      .bot .bubble.error { background: #fee2e2; color: #991b1b; }
+      .usage { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+      /* con trỏ nhấp nháy khi đang stream */
+      .cursor { display: inline-block; width: 7px; height: 1.05em;
+        background: currentColor; vertical-align: text-bottom; animation: blink 1s steps(2) infinite; }
       @keyframes blink { 0%,50% { opacity: 1 } 50.01%,100% { opacity: 0 } }
-      .muted { color: #666; font-size: 13px; }
+      /* 3 chấm khi đang chờ chữ đầu tiên (model có thể đang "suy nghĩ") */
+      .dots span { display: inline-block; width: 6px; height: 6px; margin: 0 2px;
+        background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+      .dots span:nth-child(2) { animation-delay: .2s; }
+      .dots span:nth-child(3) { animation-delay: .4s; }
+      @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: .4 } 30% { transform: translateY(-5px); opacity: 1 } }
+
+      footer {
+        background: var(--panel); border-top: 1px solid var(--border); padding: 12px 16px;
+      }
+      .composer {
+        max-width: 760px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end;
+      }
+      textarea {
+        flex: 1; resize: none; padding: 11px 12px; border-radius: 12px;
+        border: 1px solid var(--border); font: inherit; font-size: 15px;
+        max-height: 160px; outline: none;
+      }
+      textarea:focus { border-color: var(--user); }
+      button {
+        padding: 11px 18px; border: 0; border-radius: 12px; font-size: 15px;
+        background: var(--user); color: #fff; cursor: pointer;
+      }
+      button:disabled { opacity: .5; cursor: default; }
+      .hint { max-width: 760px; margin: 6px auto 0; font-size: 12px; color: var(--muted); }
     </style>
   </head>
   <body>
-    <h1>AI token streaming — hiệu ứng gõ chữ</h1>
-    <p class="muted">Server đẩy câu trả lời theo từng <em>token</em> qua SSE (event <code>content_block_delta</code>).</p>
+    <header>
+      <h1>💬 Chat streaming</h1>
+      <span id="mode" class="mock">Mock demo</span>
+    </header>
 
-    <div class="row">
-      <input id="q" placeholder="Hỏi gì đó..." value="Stream response là gì?" />
-      <button id="send">Gửi</button>
-    </div>
+    <div id="chat"></div>
 
-    <div id="answer"></div>
+    <footer>
+      <div class="composer">
+        <textarea id="input" rows="1" placeholder="Nhập tin nhắn… (Enter để gửi, Shift+Enter xuống dòng)"></textarea>
+        <button id="send">Gửi</button>
+      </div>
+      <div class="hint">Câu trả lời được đẩy về theo từng chữ qua HTTP streaming (SSE).</div>
+    </footer>
 
     <script>
-      const btn = document.getElementById('send');
-      const input = document.getElementById('q');
-      const answer = document.getElementById('answer');
+      const chat = document.getElementById('chat');
+      const input = document.getElementById('input');
+      const sendBtn = document.getElementById('send');
 
-      function ask() {
-        const q = input.value.trim();
-        if (!q) return;
-        btn.disabled = true;
-        answer.textContent = '';
-        const cursor = document.createElement('span');
-        cursor.className = 'cursor';
-        cursor.innerHTML = '&nbsp;';
-        answer.appendChild(cursor);
+      // Lịch sử hội thoại gửi kèm mỗi lượt -> model nhớ ngữ cảnh (chat nhiều lượt).
+      const messages = [];
+      let streaming = false;
 
-        // EventSource chỉ GET được -> gửi câu hỏi qua query string.
-        const es = new EventSource('/chat?q=' + encodeURIComponent(q));
-
-        // Mỗi delta = 1 mẩu chữ -> chèn vào TRƯỚC con trỏ nhấp nháy.
-        es.addEventListener('content_block_delta', (e) => {
-          const data = JSON.parse(e.data);
-          answer.insertBefore(document.createTextNode(data.delta.text), cursor);
-        });
-
-        // Kết thúc: bỏ con trỏ, đóng kết nối (nếu không sẽ tự reconnect).
-        es.addEventListener('message_stop', () => {
-          cursor.remove();
-          es.close();
-          btn.disabled = false;
-        });
-
-        es.addEventListener('error', () => {
-          es.close();
-          btn.disabled = false;
-        });
+      // Tạo 1 bong bóng tin nhắn, trả về phần tử .bubble để ghi nội dung vào.
+      function addBubble(role) {
+        const row = document.createElement('div');
+        row.className = 'msg ' + role;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        row.appendChild(bubble);
+        chat.appendChild(row);
+        chat.scrollTop = chat.scrollHeight;
+        return bubble;
       }
 
-      btn.onclick = ask;
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') ask(); });
+      // textarea tự giãn theo nội dung
+      input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+      });
+
+      async function send() {
+        const text = input.value.trim();
+        if (!text || streaming) return;
+        streaming = true;
+        sendBtn.disabled = true;
+
+        // 1) hiện tin nhắn của người dùng + lưu vào lịch sử
+        addBubble('user').textContent = text;
+        messages.push({ role: 'user', content: text });
+        input.value = '';
+        input.style.height = 'auto';
+
+        // 2) bong bóng bot: ban đầu là 3 chấm chờ (model có thể đang suy nghĩ)
+        const bot = addBubble('bot');
+        bot.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+        let answer = '';
+        let firstToken = true;
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+
+        try {
+          const resp = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages }),
+          });
+          if (!resp.ok || !resp.body) throw new Error('HTTP ' + resp.status);
+
+          // Đọc response.body theo từng chunk, tách sự kiện SSE bằng "\n\n".
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+
+            let sep;
+            while ((sep = buf.indexOf('\n\n')) !== -1) {
+              const frame = buf.slice(0, sep);
+              buf = buf.slice(sep + 2);
+              const dataLine = frame.split('\n').find((l) => l.startsWith('data:'));
+              if (!dataLine) continue;
+
+              const evt = JSON.parse(dataLine.slice(5).trim());
+
+              if (evt.type === 'delta') {
+                if (firstToken) { bot.textContent = ''; bot.appendChild(cursor); firstToken = false; }
+                answer += evt.text;
+                cursor.before(document.createTextNode(evt.text)); // chèn chữ trước con trỏ
+                chat.scrollTop = chat.scrollHeight;
+              } else if (evt.type === 'done') {
+                cursor.remove();
+                if (evt.usage?.output_tokens != null) {
+                  const u = document.createElement('div');
+                  u.className = 'usage';
+                  u.textContent = `↳ ${evt.usage.output_tokens} token`;
+                  bot.parentElement.appendChild(u);
+                }
+              } else if (evt.type === 'error') {
+                throw new Error(evt.message);
+              }
+            }
+          }
+
+          // Lưu câu trả lời vào lịch sử cho lượt sau.
+          if (answer) messages.push({ role: 'assistant', content: answer });
+        } catch (err) {
+          cursor.remove();
+          bot.className = 'bubble error';
+          bot.textContent = '⚠️ Lỗi: ' + (err?.message || err);
+          messages.pop(); // bỏ tin user vừa thêm nếu gọi hỏng, để thử lại sạch sẽ
+        } finally {
+          streaming = false;
+          sendBtn.disabled = false;
+          input.focus();
+        }
+      }
+
+      sendBtn.addEventListener('click', send);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      });
+      input.focus();
     </script>
   </body>
 </html>

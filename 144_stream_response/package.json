@@ -1,19 +1,10 @@
 {
   "name": "144-stream-response",
   "version": "1.0.0",
-  "description": "Stream response examples in Node.js - từ Streams API cơ bản đến LLM token streaming (SSE)",
+  "description": "Chat streaming demo (mock) - câu trả lời hiện dần từng chữ qua SSE, không cần API key",
   "type": "module",
   "scripts": {
-    "01:basics": "node 01_stream_basics.js",
-    "02:chunked": "node 02_http_chunked.js",
-    "03:sse": "node 03_sse_server_sent_events.js",
-    "04:file": "node 04_stream_large_file.js",
-    "05:transform": "node 05_transform_gzip.js",
-    "06:ndjson": "node 06_ndjson_stream.js",
-    "07:ai-mock": "node 07_ai_token_stream_mock.js",
-    "08:claude": "node 08_claude_real_stream.js"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.68.0"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   }
 }
