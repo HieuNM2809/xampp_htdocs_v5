@@ -16,6 +16,9 @@ node server.js          # rồi mở http://localhost:3144
 
 ## 🧠 Cơ chế (tóm tắt)
 
+> 📖 Giải thích **chi tiết từng mắt xích** (sơ đồ, buffer, SSE, chat nhiều lượt):
+> xem [CO_CHE_HOAT_DONG.md](CO_CHE_HOAT_DONG.md).
+
 ```
 [Trình duyệt]  --POST /chat { messages:[...] }-->  [server.js]
       ^                                                  |
